@@ -39,7 +39,7 @@ export function totalesDeLaLista(r: VentasResumen | undefined, tipoOperacion: nu
   const total = esPedido ? r.totalVendido : r.totalPresupuestado
   if (typeof total !== 'number') return null
   return {
-    rotulo: esPedido ? 'Vendido · sin anuladas' : 'Presupuestado · sin anuladas',
+    rotulo: esPedido ? 'Vendido sin IVA · sin anuladas' : 'Presupuestado sin IVA · sin anuladas',
     importe: formatImporte(total),
     porAutorizar: typeof r.porAutorizar === 'number' ? r.porAutorizar : 0,
   }

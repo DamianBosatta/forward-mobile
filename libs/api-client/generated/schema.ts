@@ -22828,6 +22828,10 @@ export interface components {
             tipoOperacion: components["schemas"]["TipoOperacionVenta"];
             /** Format: double */
             totalAmount: number;
+            /** Format: double */
+            totalNetoAmount?: number;
+            /** Format: double */
+            ivaAmount?: number;
             totalCurrency: string;
         };
         BultoDto: {
@@ -25592,6 +25596,8 @@ export interface components {
             /** Format: double */
             deudaMudada: number;
             /** Format: double */
+            ivaSumado?: number;
+            /** Format: double */
             cobrosMudados: number;
             /** Format: int32 */
             cantidadCobrosMudados: number;
@@ -26324,6 +26330,15 @@ export interface components {
             productoId: string;
             /** Format: double */
             cantidad: number;
+        };
+        IvaPorAlicuotaDto: {
+            alicuota: components["schemas"]["AlicuotaIva"];
+            /** Format: double */
+            porcentaje: number;
+            /** Format: double */
+            neto: number;
+            /** Format: double */
+            iva: number;
         };
         KpiDto: {
             /** Format: double */
@@ -27212,6 +27227,10 @@ export interface components {
             longitud?: number | null;
             /** Format: double */
             montoTotal: number;
+            /** Format: double */
+            montoNeto?: number;
+            /** Format: double */
+            montoIva?: number;
             motivoRechazo?: string | null;
             evidenciaUrl?: string | null;
             /** Format: uuid */
@@ -27342,6 +27361,8 @@ export interface components {
             /** Format: double */
             montoPagado?: number | null;
             conFactura: boolean;
+            /** Format: double */
+            ivaQueSeSuma?: number | null;
             /** Format: date */
             fechaEntrega: string;
             /** Format: date */
@@ -30573,6 +30594,10 @@ export interface components {
             precioUnitario: number;
             /** Format: double */
             subtotal: number;
+            /** Format: int32 */
+            alicuotaIva?: number | null;
+            /** Format: double */
+            alicuotaIvaPorcentaje?: number | null;
             /** Format: double */
             stockDeposito: number;
             /** Format: double */
@@ -30620,6 +30645,10 @@ export interface components {
             tipoOperacion: number;
             /** Format: double */
             totalAmount: number;
+            /** Format: double */
+            totalNetoAmount?: number;
+            /** Format: double */
+            ivaAmount?: number;
             totalCurrency: string;
             metodoEntrega: components["schemas"]["MetodoEntrega"];
             /** Format: date-time */
@@ -30743,6 +30772,11 @@ export interface components {
             montoDescuentoAmount: number;
             /** Format: double */
             totalAmount: number;
+            /** Format: double */
+            totalNetoAmount?: number;
+            /** Format: double */
+            ivaAmount?: number;
+            ivaPorAlicuota: components["schemas"]["IvaPorAlicuotaDto"][];
             totalCurrency: string;
             /** Format: double */
             cargoFleteAmount?: number | null;
@@ -30846,6 +30880,10 @@ export interface components {
             vendedorNombre: string;
             /** Format: double */
             totalAmount: number;
+            /** Format: double */
+            totalNetoAmount?: number;
+            /** Format: double */
+            ivaAmount?: number;
             totalCurrency: string;
             /** Format: date-time */
             fechaPendiente: string;
@@ -30895,6 +30933,10 @@ export interface components {
             cobros: components["schemas"]["RecorridoCobroDto"][];
             /** Format: double */
             total: number;
+            /** Format: double */
+            totalNeto?: number;
+            /** Format: double */
+            iva?: number;
             totalCurrency: string;
             /** Format: double */
             faltaCobrar?: number | null;
@@ -31091,6 +31133,11 @@ export interface components {
             productosSinStock: string[];
             /** Format: double */
             total?: number | null;
+            /** Format: double */
+            totalNeto?: number | null;
+            /** Format: double */
+            iva?: number | null;
+            ivaPorAlicuota: components["schemas"]["IvaPorAlicuotaDto"][];
             lineas: components["schemas"]["VistaPreviaLineaDto"][];
         };
         VistaPreviaVentaDtoResponse: {

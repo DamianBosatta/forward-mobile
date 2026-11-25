@@ -6,7 +6,7 @@ import { Button, Notice, StatusChip, chipForEstado, formatImporte, type ChipInfo
 import { direccionDeEntrega, inicialesDeDireccion, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { horaDe } from '@/features/ventas/lib/agruparPorDia'
 import { agrupar } from '../hooks/useVentasSinSenal'
-import type { VentaEnCola } from '../lib/cola'
+import { llevaIva, type VentaEnCola } from '../lib/cola'
 
 interface Props {
   items: VentaEnCola[]
@@ -41,7 +41,11 @@ function chipDe(v: VentaEnCola): ChipInfo | null {
   }
 }
 
+/** Con factura, lo que se ve en el teléfono es el neto: el IVA lo calcula el servidor al enviar. */
+const AVISO_SIN_IVA = 'Neto estimado, sin IVA: el IVA se calcula al enviar la venta.'
+
 function detalleDe(v: VentaEnCola): string | null {
+  if (v.estado.tipo === 'esperando' && llevaIva(v.alta)) return AVISO_SIN_IVA
   if (v.estado.tipo === 'revisar') return v.estado.mensaje
   if (v.estado.tipo === 'enBorradores') {
     const hoy = v.estado.totalServidor == null ? '' : ` (${formatImporte(v.estado.totalServidor)})`
@@ -115,7 +119,8 @@ function Fila({ v, separada = false, onAbrir }: { v: VentaEnCola; separada?: boo
   const encabezado = `${tipoDe(v)}${codigo} · ${horaDe(new Date(v.encoladaEn).toISOString())}`
   const direccion = direccionDeEntrega(v.cliente)
   const nombre = nombreDelCliente(v.cliente)
-  const total = formatImporte(v.visto.total)
+  // Enviada con factura: el total con IVA que se mandó; antes de eso solo se conoce el neto visto.
+  const total = formatImporte(v.estado.tipo === 'enviada' && v.estado.total !== undefined ? v.estado.total : v.visto.total)
   const detalle = detalleDe(v)
   const etiqueta = [encabezado, direccion, nombre, chip?.label, total, detalle].filter(Boolean).join(', ')
   const icono = v.estado.tipo === 'esperando'

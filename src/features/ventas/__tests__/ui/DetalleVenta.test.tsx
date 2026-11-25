@@ -84,6 +84,24 @@ describe('R1 · detalle del pedido (ResVentaDetalle, TV7)', () => {
     expect(screen.getByLabelText(/^Total: /)).toBeTruthy()
   })
 
+  it('IVA encima del neto: con IVA muestra neto, IVA por alícuota (el porcentaje, no el enum) y el total del servidor', async () => {
+    venta({ totalNetoAmount: 73336.5, ivaAmount: 15400.67, totalAmount: 88737.17,
+      ivaPorAlicuota: [{ alicuota: 'Iva21', porcentaje: 21, neto: 73336.5, iva: 15400.67 }] })
+    pantalla()
+    expect(await screen.findByText('Neto')).toBeTruthy()
+    expect(screen.getByText('IVA 21 %')).toBeTruthy()
+    expect(screen.queryByText(/Iva21/)).toBeNull()
+    expect(screen.getByLabelText('Total: $ 88.737,17')).toBeTruthy()
+  })
+
+  it('IVA encima del neto: sin IVA (régimen viejo) un solo total, sin filas de neto ni IVA', async () => {
+    venta({ totalNetoAmount: 88738.89, ivaAmount: 0, ivaPorAlicuota: [] })
+    pantalla()
+    expect(await screen.findByText('Pedido A00419')).toBeTruthy()
+    expect(screen.queryByText('Neto')).toBeNull()
+    expect(screen.queryByText(/^IVA/)).toBeNull()
+  })
+
   it('muestra la condición de pago elegida en la venta', async () => {
     venta({ condicionPago: { tipo: 'DiasDesdeEntrega', dias: 15 } })
     pantalla()

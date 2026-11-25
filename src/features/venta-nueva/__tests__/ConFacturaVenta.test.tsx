@@ -9,6 +9,7 @@ import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { producto } from '../__testing__/producto'
 import { avisosVenta } from '../lib/avisos'
 import { aplicarDescuentoGeneral } from '../__testing__/descuentoGeneral'
+import { PREVIEW_IVA } from '../__testing__/vistaPreviaIva'
 
 const mockPost = jest.fn()
 const mockGet = jest.fn()
@@ -64,7 +65,8 @@ const cuerpoDelAlta = () => mockPost.mock.calls.find((c) => c[0] === '/api/v1/Ve
 
 beforeEach(() => {
   porDefecto = { ventaConFacturaPorDefecto: true }
-  mockPost.mockReset().mockResolvedValue({ ventaId: 'b1', version: 7, message: 'Borrador creado.' })
+  mockPost.mockReset().mockImplementation((url: string) => url === '/api/v1/Ventas/vista-previa' ? Promise.resolve(PREVIEW_IVA)
+    : Promise.resolve({ ventaId: 'b1', version: 7, message: 'Borrador creado.' }))
   mockPut.mockReset().mockImplementation((_u: string, body: { version: number }) => Promise.resolve({ ventaId: 'b1', version: body.version + 1, message: 'ok' }))
   mockGet.mockReset().mockImplementation((url: string) => Promise.resolve(
     url === URL_DEFECTO ? porDefecto : url.includes('dias-entrega') ? TODOS : url.includes('feriados') ? [] : undefined))
@@ -81,9 +83,11 @@ describe('V7 Confirmar: Con factura', () => {
     const sw = await screen.findByRole('switch', { name: 'Con factura' })
     await waitFor(() => expect(screen.getByRole('switch', { name: 'Con factura' })).toBeChecked())
     expect(sw).toBeTruthy()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeEnabled())
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(cuerpoDelAlta()).toBeDefined())
     expect(cuerpoDelAlta().conFactura).toBe(true)
+    expect(cuerpoDelAlta().totalEsperado).toBe(PREVIEW_IVA.total)
   })
 
   it('si el vendedor lo apaga, viaja false aunque el default sea true', async () => {
@@ -94,6 +98,7 @@ describe('V7 Confirmar: Con factura', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(cuerpoDelAlta()).toBeDefined())
     expect(cuerpoDelAlta().conFactura).toBe(false)
+    expect(cuerpoDelAlta()).not.toHaveProperty('totalEsperado')
   })
 
   it('default false: nace apagado y viaja false', async () => {
@@ -104,6 +109,7 @@ describe('V7 Confirmar: Con factura', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(cuerpoDelAlta()).toBeDefined())
     expect(cuerpoDelAlta().conFactura).toBe(false)
+    expect(cuerpoDelAlta()).not.toHaveProperty('totalEsperado')
   })
 
   it('sin el default (no llegó): el tilde está deshabilitado y el alta no manda conFactura (lo decide el servidor)', async () => {

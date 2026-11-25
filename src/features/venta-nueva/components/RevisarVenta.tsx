@@ -14,6 +14,8 @@ import { useRevalidarStockVenta } from '../hooks/useRevalidarStockVenta'
 import { precioServidor, subtotalLinea, unidadesPorBultoDe, type LineaCarrito } from '../lib/carrito'
 import { disponibleParaLinea, faltaStock, totalesEstimados, type YaReservadas } from '../lib/avisos'
 import { mostrarNumero } from '../lib/linea'
+import type { TotalConIva } from '../lib/totalConIva'
+import { FilasDeIva, totalDelPie } from './TotalConIvaVista'
 
 interface Props {
   /** Qué paso de la venta dibuja: 'carrito' (paso 3: las líneas y "Continuar a entrega") o 'entrega' (paso 4: total y confirmar). */
@@ -44,6 +46,9 @@ interface Props {
   yaReservadas?: YaReservadas
   /** Texto del botón; sin esto, "Confirmar venta". Editar usa "Guardar cambios". */
   etiquetaConfirmar?: string
+  /** Venta con factura: neto, IVA y total que calculó el servidor (IVA encima del neto). Sin él, la pantalla es la de siempre. */
+  totalConIva?: TotalConIva
+  onReintentarTotal?: () => void
   /** Por qué la venta va a quedar por autorizar (lo calcula `avisos`); sin motivos no hay aviso. */
   autorizacion?: string[]
   /** "Editar" de la sección Productos: vuelve al catálogo a sumar o sacar productos. */
@@ -71,7 +76,7 @@ function detalleDe(l: LineaCarrito): string {
  * factura (`ajustes`), el aviso de autorización, el total y "Confirmar venta", que vuelve a chequear el stock y manda la venta
  * (no hay segunda confirmación). Si falta stock no se bloquea: el flujo de confirmar pide el motivo y la venta va a autorización.
  */
-export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes, autorizacion = [], onEditarProductos, yaReservadas, sinEncabezado = false, etiquetaConfirmar = 'Confirmar venta' }: Props) {
+export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes, autorizacion = [], onEditarProductos, yaReservadas, sinEncabezado = false, etiquetaConfirmar = 'Confirmar venta', totalConIva, onReintentarTotal }: Props) {
   const c = useColors()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const { lineas, cambios, confirmado, sinConexion, revalidando, revalidar } = useRevalidarStockVenta()
@@ -87,6 +92,8 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
   // Los productos con sus descuentos, sin el flete: lo que cierra el carrito antes de la entrega.
   const productos = totalesEstimados(lineas, descuentoGeneral).total
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
+  const pie = totalDelPie(totalConIva, t.total)
+  const conDesglose = totalConIva?.estado === 'listo' && !!totalConIva.desglose
 
   const confirmar = async () => {
     // El stock se vuelve a chequear justo antes: confirmar decide con lo que haya en ese momento.
@@ -217,8 +224,10 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
             </>
           ) : (
             <>
-              <TotalsRow label="Total de productos" importe={productos} />
+              {/* Con IVA y sin flete "Total de productos" y "Neto" son el mismo número: solo se muestra "Neto". */}
+              {conDesglose && flete <= 0 ? null : <TotalsRow label="Total de productos" importe={productos} />}
               {flete > 0 ? <TotalsRow label="Flete (logística propia)" importe={flete} /> : null}
+              <FilasDeIva total={totalConIva} onReintentar={onReintentarTotal} />
             </>
           )}
           {entrega ? (
@@ -252,8 +261,8 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
             </>
           ) : null}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Text style={secundario}>Total estimado</Text>
-            <Text testID="revisar-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(t.total)}</Text>
+            <Text style={secundario}>{pie.rotulo}</Text>
+            <Text testID="revisar-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{pie.texto}</Text>
           </View>
           <Button size="lg" label={etiquetaConfirmar} onPress={() => { void confirmar() }} loading={enviando || confirmando} disabled={enviando || confirmando || deshabilitado || lineas.length === 0} />
           {motivoDeshabilitado ? <MotivoDeshabilitado>{motivoDeshabilitado}</MotivoDeshabilitado> : null}

@@ -198,7 +198,7 @@ describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => 
     conResumen(servidorNuevo)
     pantalla()
     const tarjeta = await screen.findByTestId('totales-lista')
-    expect(within(tarjeta).getByText('Vendido · sin anuladas')).toBeTruthy()
+    expect(within(tarjeta).getByText('Vendido sin IVA · sin anuladas')).toBeTruthy()
     expect(within(tarjeta).getByText(formatImporte(6860919))).toBeTruthy()
     expect(within(tarjeta).getByText('1 por autorizar')).toBeTruthy()
   })

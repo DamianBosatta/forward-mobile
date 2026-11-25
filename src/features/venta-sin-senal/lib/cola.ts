@@ -37,7 +37,8 @@ export type EstadoEnCola =
    * (`fallosDelTopeTras`); falta en las colas guardadas por la versión anterior y vale cero.
    */
   | { tipo: 'esperando'; fase: FaseEnvio; intentos: number; fallosDelTope?: number }
-  | { tipo: 'enviada'; ventaId: string; codigo: string | null; estado: EstadoVentaNombre | null }
+  /** `total`: solo en una venta con factura (el neto que vio el vendedor no es lo que se grabó): el total con IVA que dijo el servidor al enviarla. */
+  | { tipo: 'enviada'; ventaId: string; codigo: string | null; estado: EstadoVentaNombre | null; total?: number }
   /** El precio cambió al enviarse: quedó como borrador para revisarla (no se confirmó). */
   | { tipo: 'enBorradores'; ventaId: string; totalServidor: number | null }
   /**
@@ -63,24 +64,33 @@ export function loQueVio(lineas: LineaCarrito[], descuentoGeneral: number, flete
 }
 
 /**
- * Lo que viaja en POST /Ventas desde la cola: el alta más `totalEsperado` (el total que vio el vendedor), que el
- * servidor compara si la clave es nueva y responde 409 `TotalCambiado` si difiere. Todavía no está en el esquema
- * generado (`CreateVentaCommand`): se declara acá hasta regenerar el contrato.
+ * El total que vio el vendedor en pantalla (con descuento y flete), el que va como `totalEsperado` cuando el servidor no
+ * le mostró uno: nada se graba a un total que el vendedor no vio. Una sola cuenta para la pantalla y la cola (X1).
  */
-export type AltaEnCola = AltaVenta & { totalEsperado?: number }
+export const totalVisto = (visto: LoQueVio): number => redondear2(visto.total)
 
 export interface VentaEnCola {
   /** = `alta.claveIdempotencia`; identifica la venta en la cola. */
   clave: string
-  alta: AltaEnCola
+  /** El cuerpo exacto del POST /Ventas, con su `totalEsperado`. */
+  alta: AltaVenta
   encoladaEn: number
   cliente: ClienteNombrable
   visto: LoQueVio
   estado: EstadoEnCola
 }
 
+/**
+ * Con el tilde de factura el total lo arma el servidor con el IVA encima del neto: un `totalEsperado` que es el neto da 409
+ * `TotalCambiado` (la venta no se graba), y se cotiza de nuevo antes de mandarla con el total del servidor.
+ */
+export const llevaIva = (alta: { conFactura?: boolean | null }): boolean => alta.conFactura === true
+
 export interface DatosParaEncolar {
-  /** Con su `claveIdempotencia` (obligatoria): la misma venta es siempre la misma clave, y encolarla dos veces no la duplica. */
+  /**
+   * Con su `claveIdempotencia` (obligatoria): la misma venta es siempre la misma clave, y encolarla dos veces no la duplica.
+   * Si ya se intentó (`yaSeIntento`) es el cuerpo que se mandó, con su `totalEsperado`.
+   */
   alta: AltaVenta
   cliente: ClienteNombrable
   visto: LoQueVio
@@ -173,11 +183,15 @@ export function encolarVenta(usuarioId: string, d: DatosParaEncolar, ahora = Dat
   if (!clave) throw new Error('La venta no tiene clave de idempotencia: sin ella un reintento podría grabarla dos veces.')
   const ya = lista.find((v) => v.clave === clave)
   if (ya) return ya
-  const invalido = errorDeAltaVenta({ ...d.alta, claveIdempotencia: clave })
+  const { totalEsperado: yaMandado, ...sinTotal } = d.alta
+  const invalido = errorDeAltaVenta({ ...sinTotal, claveIdempotencia: clave })
   if (invalido) throw new Error(invalido)
+  // El cuerpo en la cola es exactamente el que se mandó (o se va a mandar): con el total que vio la pantalla, y si no mandó
+  // ninguno, el que vio el vendedor. Con factura ese neto da 409 TotalCambiado y se cotiza de nuevo (`enviar.ts`).
+  const alta: AltaVenta = { ...d.alta, claveIdempotencia: clave, totalEsperado: yaMandado ?? totalVisto(d.visto) }
   const venta: VentaEnCola = {
     clave,
-    alta: { ...d.alta, claveIdempotencia: clave, totalEsperado: redondear2(d.visto.total) },
+    alta,
     encoladaEn: ahora,
     cliente: d.cliente,
     visto: d.visto,
@@ -187,9 +201,15 @@ export function encolarVenta(usuarioId: string, d: DatosParaEncolar, ahora = Dat
   return venta
 }
 
-/** Cambia el estado de una venta (y lo deja guardado antes de seguir). */
-export function cambiarEstado(usuarioId: string, clave: string, estado: EstadoEnCola): void {
-  escribir(usuarioId, leerCola(usuarioId).map((v) => (v.clave === clave ? { ...v, estado } : v)))
+/**
+ * Cambia el estado de una venta (y lo deja guardado antes de seguir). `totalEsperado`: el total con IVA de una venta con factura,
+ * que se guarda en el mismo paso que el cambio de fase, antes del POST que lo manda.
+ */
+export function cambiarEstado(usuarioId: string, clave: string, estado: EstadoEnCola, totalEsperado?: number): void {
+  escribir(usuarioId, leerCola(usuarioId).map((v) => {
+    if (v.clave !== clave) return v
+    return totalEsperado === undefined ? { ...v, estado } : { ...v, estado, alta: { ...v.alta, totalEsperado } }
+  }))
 }
 
 /** La venta se detuvo por el tope de intentos (no la rechazó el servidor) y se puede retomar. */

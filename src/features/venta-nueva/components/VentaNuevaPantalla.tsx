@@ -16,9 +16,9 @@ import { useCabeceraVenta } from '../hooks/useCabeceraVenta'
 import { useConfirmarVenta } from '../hooks/useConfirmarVenta'
 import { useBorradorVenta } from '../hooks/useBorradorVenta'
 import { useComisionEstimada } from '../hooks/useComisionEstimada'
-import { aAlta, aAutoguardado } from '../lib/payload'
-import { useVistaPreviaVenta } from '@/libs/api-client/ventas'
-import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
+import { aAutoguardado } from '../lib/payload'
+import { useTotalConIva } from '../hooks/useTotalConIva'
+import { MOTIVO_CALCULANDO_IVA } from './TotalConIvaVista'
 import { useDepositoDeVenta, useDepositoElegidoStore } from '../hooks/useDepositoDeVenta'
 import { avisosVenta, superaElTope, type YaReservadas } from '../lib/avisos'
 import { mostrarNumero } from '../lib/linea'
@@ -111,17 +111,19 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   // Editar: lo que la venta ya tenía por producto. El servidor ya lo descontó del `disponible`; sin esto la revisión avisa de más.
   const [yaReservadas, setYaReservadas] = useState<YaReservadas | undefined>(undefined)
   const abrirEf = abrir
+  // La vista previa del servidor: motivos de autorización y, con factura, el total con IVA (también al editar, solo para mostrarlo).
+  const { vistaPrevia, totalConIva, reintentar: reintentarTotal } = useTotalConIva({
+    cliente, esPedido: tipo === 'Pedido', lineas, descuentoGeneral: descuentoValido, cabecera: cab.cabecera, depositoId,
+    porcentajeCedido: cab.porcentajeCedido, habilitado: !cab.fleteInvalido && !cab.cesionError,
+  })
   const conf = useConfirmarVenta({
     clienteId: cliente?.id ?? '', cliente, esPedido: tipo === 'Pedido', lineas, descuentoGeneral: descuentoValido, cabecera: cab.cabecera,
     porcentajeCedido: cab.porcentajeCedido, borrador: b, alGuardar: () => { vaciar(); alTerminar?.() }, edicion,
+    totalConIva: edicion ? undefined : totalConIva, alCambiarElTotal: reintentarTotal,
   })
-  const cuerpoVistaPrevia = useDebouncedValue(cliente && tipo === 'Pedido' && !edicion && lineas.length > 0
-    ? aAlta(lineas, descuentoValido, cab.cabecera, {
-      clienteId: cliente.id, depositoId, esPedido: true, claveIdempotencia: '',
-      motivoVentaSinStock: 'Vista previa', porcentajeComisionCedido: cab.porcentajeCedido,
-    })
-    : null)
-  const vistaPrevia = useVistaPreviaVenta(cuerpoVistaPrevia, !cab.fleteInvalido && !cab.cesionError)
+  // Con factura no se manda sin el total del servidor: se espera el cálculo, y si falló con red se reintenta (sin red sigue como siempre).
+  // Solo el Pedido manda el total esperado; el Presupuesto se guarda sin él y no espera el cálculo.
+  const esperaElIva = !edicion && tipo === 'Pedido' && (totalConIva.estado === 'calculando' || (totalConIva.estado === 'error' && !totalConIva.sinSenal))
   // `editando`: una fragancia suelta, que se edita en el detalle (tope por stock); el resto va a la pantalla de oferta.
   const [editando, setEditando] = useState<LineaCarrito | null>(null)
   // `oferta`: el producto abierto en "Cantidad y oferta"; con línea en el carrito es una edición, sin ella un alta.
@@ -342,8 +344,10 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
         enviando={conf.enviando}
         error={conf.error}
         onConfirmar={() => conf.confirmar()}
-        deshabilitado={cab.fleteInvalido || !!cab.cesionError || presupuestoSobreTope}
-        motivoDeshabilitado={presupuestoSobreTope ? MOTIVO_PRESUPUESTO_SOBRE_TOPE : undefined}
+        deshabilitado={cab.fleteInvalido || !!cab.cesionError || presupuestoSobreTope || esperaElIva}
+        motivoDeshabilitado={presupuestoSobreTope ? MOTIVO_PRESUPUESTO_SOBRE_TOPE : esperaElIva && totalConIva.estado === 'calculando' ? MOTIVO_CALCULANDO_IVA : undefined}
+        totalConIva={totalConIva}
+        onReintentarTotal={reintentarTotal}
         onEditarLinea={editarLinea}
         onElegirFragancias={setFragancias}
         ajustes={enEntrega ? ajustesEntrega : ajustesCarrito}

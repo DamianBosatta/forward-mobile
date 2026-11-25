@@ -1,5 +1,5 @@
 import { api, ApiError } from '@/core/api/client'
-import { esError, mensajeDeError } from '@/core/api/errores'
+import { esError, mensajeDeError, totalCambiadoDe } from '@/core/api/errores'
 import { TOPE_DE_INTENTOS, avisoDeTope, fallosDelTopeTras } from '@/core/utils/colasSinSenal'
 import { guardarBorradorVenta, type BorradorVenta, type VistaPreviaVenta } from '@/libs/api-client/ventas'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
@@ -8,7 +8,7 @@ import { resolverEstadoVenta } from '@/libs/reglas/estados'
 import { redondear2 } from '@/libs/reglas/dinero'
 import type { AltaVenta, AutoguardadoVenta } from '@/features/venta-nueva/lib/payload'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { cambiarEstado, leerCola, type FaseEnvio, type VentaEnCola } from './cola'
+import { cambiarEstado, leerCola, llevaIva, type FaseEnvio, type VentaEnCola } from './cola'
 
 type VistaPreviaLineaDto = components['schemas']['VistaPreviaLineaDto']
 
@@ -43,19 +43,6 @@ function ventaYaGrabada(e: unknown): VentaActionResponseDto | null {
   if (!esError(e, 'ClaveIdempotenciaConOtroCuerpo')) return null
   const v = e.data as Partial<VentaActionResponseDto> | undefined
   return typeof v?.ventaId === 'string' && v.ventaId ? (v as VentaActionResponseDto) : null
-}
-
-/**
- * 409 `TotalCambiado` (forward-system, bloque 12 T5): el precio cambió desde que el vendedor vio el total y la venta NO se grabó.
- * Devuelve el total de hoy. El catálogo generado todavía no trae el código (llega como 'Desconocido'): se reconoce
- * también por la forma de su `data` (`{ total, lineas[] }`), que ningún otro 409 de POST /Ventas tiene.
- */
-function totalCambiado(e: unknown): { total: number | null } | null {
-  if (!(e instanceof ApiError) || e.status !== 409) return null
-  const d = e.data as { total?: unknown; lineas?: unknown } | undefined
-  const conForma = typeof d?.total === 'number' && Array.isArray(d.lineas)
-  if ((e.codigo as string | undefined) !== 'TotalCambiado' && !(e.codigo === 'Desconocido' && conForma)) return null
-  return { total: typeof d?.total === 'number' ? d.total : null }
 }
 
 /** ¿Algún precio del servidor no es el que vio el vendedor? Un producto sin precio visto también cuenta. */
@@ -94,12 +81,12 @@ class Envio {
   }
 
   /** Guarda el paso ANTES de la llamada que lo sigue: si la app muere en el medio, se retoma de acá. */
-  private pasar(fase: FaseEnvio) {
+  private pasar(fase: FaseEnvio, totalEsperado?: number) {
     const a = this.actual()
     const previo = a?.estado.tipo === 'esperando' ? a.estado : undefined
     cambiarEstado(this.usuarioId, this.venta.clave, {
       tipo: 'esperando', fase, intentos: previo?.intentos ?? 0, fallosDelTope: previo?.fallosDelTope,
-    })
+    }, totalEsperado)
   }
 
   /** true: quedó resuelta (enviada, en Borradores o para revisar); false: se cortó y sigue esperando. */
@@ -139,31 +126,49 @@ class Envio {
   /** Lo decide el servidor: si rechazaría la venta, para revisar; si el precio cambió, a Borradores; si no, el alta. */
   private async conVistaPrevia() {
     this.exigirSesion()
-    const vp = await api.post<VistaPreviaVenta>('/api/v1/Ventas/vista-previa', this.venta.alta)
+    // Con factura la vista previa no lleva `totalEsperado`: el que hubiera es el neto (o ninguno) y la vista previa lo ignora.
+    const { totalEsperado: _neto, ...sinTotal } = this.venta.alta
+    const conIva = llevaIva(this.venta.alta)
+    const vp = await api.post<VistaPreviaVenta>('/api/v1/Ventas/vista-previa', conIva ? sinTotal : this.venta.alta)
     if (vp.rechazos?.length) {
       cambiarEstado(this.usuarioId, this.venta.clave, { tipo: 'revisar', mensaje: vp.rechazos.join('\n') })
       return
     }
     const totalServidor = vp.total ?? null
-    if (cambioElPrecio(this.venta.visto.precios, vp.lineas ?? [])) {
+    // Con factura también cuenta el neto: si no es el que vio el vendedor, no se manda sola (un `totalNeto` ausente: el total es el neto).
+    const netoDistinto = conIva && redondear2(vp.totalNeto ?? vp.total ?? Number.NaN) !== redondear2(this.venta.visto.total)
+    if (netoDistinto || cambioElPrecio(this.venta.visto.precios, vp.lineas ?? [])) {
       const desde = Date.now()
       this.pasar({ paso: 'creandoBorrador', desde, totalServidor })
       await this.crearBorrador(desde, totalServidor, false)
       return
     }
-    this.pasar({ paso: 'altaEnviada' })
-    await this.darDeAlta()
+    // Con factura el total del servidor se guarda con la venta ANTES del POST: el reintento sale con el mismo cuerpo y la misma clave.
+    this.pasar({ paso: 'altaEnviada' }, conIva && typeof vp.total === 'number' ? redondear2(vp.total) : undefined)
+    await this.darDeAlta(true)
   }
 
-  /** POST /Ventas, siempre con la misma clave: con ella el servidor devuelve la venta que ya existe. */
-  private async darDeAlta() {
+  /**
+   * POST /Ventas, siempre con la misma clave: con ella el servidor devuelve la venta que ya existe.
+   * `cotizada`: la vista previa corrió en esta ronda justo antes (un 409 ahora ya no se vuelve a cotizar).
+   */
+  private async darDeAlta(cotizada = false) {
     let r: VentaActionResponseDto
     this.exigirSesion()
+    // Lo guardado manda: con factura el total se agregó a la venta recién antes de este POST.
+    const { alta } = this.actual() ?? this.venta
     try {
-      r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', this.venta.alta)
+      r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', alta)
     } catch (e) {
-      const cambiado = totalCambiado(e)
+      const cambiado = totalCambiadoDe(e)
       if (cambiado) {
+        // Con factura el cuerpo salió con el neto que vio el vendedor y el 409 es lo esperable: la venta seguro no se grabó, así
+        // que se cotiza una vez (misma clave: el 409 la liberó). Precios iguales se manda con el total del servidor; si no, Borradores.
+        if (llevaIva(alta) && !cotizada) {
+          this.pasar({ paso: 'nueva' })
+          await this.conVistaPrevia()
+          return
+        }
         // No se grabó: queda en Borradores con el precio de hoy, igual que si la vista previa hubiera avisado.
         const desde = Date.now()
         this.pasar({ paso: 'creandoBorrador', desde, totalServidor: cambiado.total })
@@ -181,6 +186,7 @@ class Envio {
     const estado = resolverEstadoVenta(r.estado ?? detalle?.venta?.estado)?.nombre ?? null
     cambiarEstado(this.usuarioId, this.venta.clave, {
       tipo: 'enviada', ventaId: r.ventaId, codigo: detalle?.venta?.codigoPedido ?? null, estado,
+      ...(llevaIva(alta) && typeof alta.totalEsperado === 'number' ? { total: alta.totalEsperado } : {}),
     })
   }
 

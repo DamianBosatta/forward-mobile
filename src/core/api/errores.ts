@@ -54,6 +54,19 @@ export function esError(e: unknown, codigo: CodigoError): e is ApiError {
 }
 
 /**
+ * 409 `TotalCambiado` (POST /Ventas con `totalEsperado`): el total de hoy, porque la venta NO se grabó. Es la única lectura de ese 409
+ * (la pantalla de venta y la cola sin señal usan esta). Devuelve `{ total }` (null si el cuerpo no lo trae) o null si el error es otro.
+ * Se reconoce también por la forma de su `data` (`{ total, lineas[] }`) cuando el catálogo lo trae como 'Desconocido'.
+ */
+export function totalCambiadoDe(e: unknown): { total: number | null } | null {
+  if (!(e instanceof ApiError) || e.status !== 409) return null
+  const d = e.data as { total?: unknown; lineas?: unknown } | undefined
+  const conForma = typeof d?.total === 'number' && Array.isArray(d.lineas)
+  if ((e.codigo as string | undefined) !== 'TotalCambiado' && !(e.codigo === 'Desconocido' && conForma)) return null
+  return { total: typeof d?.total === 'number' ? d.total : null }
+}
+
+/**
  * El único lugar que convierte lo que recibe un `catch` (`unknown`) en el texto para el usuario: el
  * mensaje del servidor y, debajo, el motivo por campo (en los errores de validación el mensaje es
  * genérico y el motivo real viene en `errors`).

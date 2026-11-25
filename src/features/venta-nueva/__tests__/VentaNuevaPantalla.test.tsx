@@ -856,7 +856,13 @@ describe('confirmar', () => {
     mockTipo = 'Presupuesto'
     await armar()
     await waitFor(() => expect(sync()).toHaveTextContent('Borrador guardado'), ESPERA)
-    mockPost.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')))
+    // Solo el primer guardar-presupuesto se corta (la vista previa del IVA también pasa por POST y no cuenta).
+    const normal = mockPost.getMockImplementation()!
+    let cortado = false
+    mockPost.mockImplementation((url: string, ...resto: unknown[]) => {
+      if (url.endsWith('/guardar-presupuesto') && !cortado) { cortado = true; return Promise.reject(new TypeError('Network request failed')) }
+      return normal(url, ...resto)
+    })
     await confirmarVenta()
     await waitFor(() => expect(presupuestos()).toHaveLength(1))
     await confirmarVenta()

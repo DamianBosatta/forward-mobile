@@ -1,7 +1,7 @@
 // Vender sin señal (V9, D4): la cola en el teléfono, su envío (montado en app/_layout) y el encolado cuando el alta falla por la conexión.
 export {
-  encolarVenta, leerCola, cambiarEstado, quitarDeCola, limpiarEnviadasViejas, limpiarBorradoresResueltos, suscribirCola, loQueVio,
-  type VentaEnCola, type EstadoEnCola, type FaseEnvio, type LoQueVio, type DatosParaEncolar, type AltaEnCola,
+  encolarVenta, leerCola, cambiarEstado, quitarDeCola, limpiarEnviadasViejas, limpiarBorradoresResueltos, suscribirCola, loQueVio, totalVisto, llevaIva,
+  type VentaEnCola, type EstadoEnCola, type FaseEnvio, type LoQueVio, type DatosParaEncolar,
 } from './lib/cola'
 export { encolarSiFaltaSenal } from './lib/encolarSinSenal'
 export { EnvioVentasSinSenal } from './components/EnvioVentasSinSenal'

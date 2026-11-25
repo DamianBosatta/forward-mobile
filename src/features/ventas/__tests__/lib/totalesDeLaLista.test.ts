@@ -5,11 +5,11 @@ describe('totalesDeLaLista (tarjeta de totales de la lista de ventas)', () => {
   const resumen = { totalVendido: 1286450, totalPresupuestado: 500000, porAutorizar: 2, cantidad: 12 }
 
   it('en Pedidos muestra lo vendido sin anuladas y cuántas esperan autorización', () => {
-    expect(totalesDeLaLista(resumen, 2)).toEqual({ rotulo: 'Vendido · sin anuladas', importe: formatImporte(1286450), porAutorizar: 2 })
+    expect(totalesDeLaLista(resumen, 2)).toEqual({ rotulo: 'Vendido sin IVA · sin anuladas', importe: formatImporte(1286450), porAutorizar: 2 })
   })
 
   it('en Presupuestos muestra lo presupuestado', () => {
-    expect(totalesDeLaLista(resumen, 1)).toEqual({ rotulo: 'Presupuestado · sin anuladas', importe: formatImporte(500000), porAutorizar: 2 })
+    expect(totalesDeLaLista(resumen, 1)).toEqual({ rotulo: 'Presupuestado sin IVA · sin anuladas', importe: formatImporte(500000), porAutorizar: 2 })
   })
 
   it('sin resumen filtrado (servidor anterior, sin cantidad) no hay tarjeta', () => {

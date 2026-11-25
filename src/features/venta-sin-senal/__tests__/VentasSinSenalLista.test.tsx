@@ -80,4 +80,24 @@ describe('VentasSinSenalLista (V9)', () => {
     await userEvent.setup().press(screen.getByRole('button', { name: /Alem 3669/ }))
     expect(onAbrir).toHaveBeenCalledWith(v)
   })
+  describe('venta con factura (IVA encima del neto)', () => {
+    const conFactura = (clave: string, estado: EstadoEnCola) => venta(clave, estado, { alta: { ...venta(clave, estado).alta, conFactura: true } })
+
+    it('esperando: el importe es el neto estimado y dice que el IVA se calcula al enviar', () => {
+      render(<VentasSinSenalLista items={[conFactura('a', esperando)]} sinSenal horaCatalogo={null} />)
+      expect(screen.getByText('Neto estimado, sin IVA: el IVA se calcula al enviar la venta.')).toBeTruthy()
+    })
+
+    it('sin el tilde la fila es la de siempre: ningún aviso de IVA', () => {
+      render(<VentasSinSenalLista items={[venta('a', esperando)]} sinSenal horaCatalogo={null} />)
+      expect(screen.queryByText(/IVA/)).toBeNull()
+    })
+
+    it('enviada: muestra el total con IVA que se mandó, no el neto que se vio', () => {
+      render(<VentasSinSenalLista items={[conFactura('c', { tipo: 'enviada', ventaId: 'v1', codigo: 'A1', estado: 'Confirmada', total: 74056.96 })]} sinSenal={false} horaCatalogo={null} />)
+      expect(screen.getByText(/74\.056,96/)).toBeTruthy()
+      expect(screen.queryByText(/61\.204,10/)).toBeNull()
+      expect(screen.queryByText(/sin IVA/)).toBeNull()
+    })
+  })
 })
