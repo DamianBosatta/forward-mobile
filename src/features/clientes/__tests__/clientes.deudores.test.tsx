@@ -72,7 +72,7 @@ describe('Clientes: filtro Deudores', () => {
 
     await userEvent.press(screen.getByRole('button', { name: 'Deudores' }))
 
-    expect(await screen.findByText('Graciela Ruiz', undefined, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/Graciela Ruiz/, undefined, ESPERA)).toBeTruthy()
     expect(screen.getByText(/1 cliente debe/)).toBeTruthy()
     expect(screen.queryByText('Av. del Valle 89')).toBeNull()
     expect(get.mock.calls.some(([u]) => String(u).startsWith('/api/v1/deudas/clientes'))).toBe(true)
@@ -82,7 +82,7 @@ describe('Clientes: filtro Deudores', () => {
     renderConQuery(<ClientesScreen />)
     await userEvent.press(await screen.findByRole('button', { name: 'Deudores' }, ESPERA))
 
-    await userEvent.press(await screen.findByText('Graciela Ruiz', undefined, ESPERA))
+    await userEvent.press(await screen.findByText(/Graciela Ruiz/, undefined, ESPERA))
 
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/[id]', params: { id: 'c1' } })
   })
@@ -105,7 +105,7 @@ describe('Clientes: filtro Deudores', () => {
     await screen.findByRole('button', { name: 'Deudores' }, ESPERA)
     const antes = screen.getAllByText('Deudores').length
     await userEvent.press(await screen.findByRole('button', { name: 'Deudores' }, ESPERA))
-    await screen.findByText('Graciela Ruiz', undefined, ESPERA)
+    await screen.findByText(/Graciela Ruiz/, undefined, ESPERA)
 
     expect(screen.getAllByText('Deudores').length).toBe(antes + 1)
   })
@@ -113,7 +113,7 @@ describe('Clientes: filtro Deudores', () => {
   it('"Mi cartera" vuelve a la lista completa', async () => {
     renderConQuery(<ClientesScreen />)
     await userEvent.press(await screen.findByRole('button', { name: 'Deudores' }, ESPERA))
-    await screen.findByText('Graciela Ruiz', undefined, ESPERA)
+    await screen.findByText(/Graciela Ruiz/, undefined, ESPERA)
 
     await userEvent.press(screen.getByRole('button', { name: 'Mi cartera' }))
 
@@ -134,7 +134,7 @@ describe('Clientes: abrir directo en Deudores (?filtro=deudores)', () => {
     mockParams = { filtro: 'deudores' }
     renderConQuery(<ClientesScreen />)
 
-    expect(await screen.findByText('Graciela Ruiz', undefined, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/Graciela Ruiz/, undefined, ESPERA)).toBeTruthy()
     expect(screen.queryByText('Av. del Valle 89')).toBeNull()
   })
 

@@ -3,7 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } fr
 import { useRouter } from 'expo-router'
 import { ChevronRight } from 'lucide-react-native'
 import { importe, maxFontScale, radii, space, typeScale, useColors, type ChipEstado } from '@/libs/theme'
-import { Entrada, StatusChip, TopBar, useMenuLeading } from '@/core/ui/fw'
+import { Entrada, StatusChip, TopBar, useColumnaDeFormulario, useMenuLeading } from '@/core/ui/fw'
 import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
@@ -72,6 +72,8 @@ export function HojasDeRutaScreen() {
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
+  // P17 A / MD-16: en tablet la lista es una columna centrada de FORM_MAX_WIDTH; en teléfono no cambia.
+  const columna = useColumnaDeFormulario()
   const [clave, setClave] = useState<(typeof FILTROS)[number]['clave']>('enCurso')
   const filtro = FILTROS.find((f) => f.clave === clave) ?? FILTROS[0]
   const q = useHojasDeRuta({ estado: filtro.estado })
@@ -85,7 +87,7 @@ export function HojasDeRutaScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Hojas de ruta" subtitle="Todas las hojas" leading={menu ?? { kind: 'atras', onPress: () => router.back() }} />
-      <View style={{ flexDirection: 'row', gap: space[2], padding: space[4], paddingBottom: space[2] }}>
+      <View testID="hojas-filtros" style={[{ flexDirection: 'row', gap: space[2], padding: space[4], paddingBottom: space[2] }, columna]}>
         {FILTROS.map((f) => <FiltroChip key={f.clave} label={f.label} activo={f.clave === clave} onPress={() => setClave(f.clave)} />)}
       </View>
       {q.isLoading ? (
@@ -99,7 +101,7 @@ export function HojasDeRutaScreen() {
           data={hojas}
           keyExtractor={(h) => h.id}
           refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { void q.refetch() }} />}
-          contentContainerStyle={{ padding: space[4] }}
+          contentContainerStyle={[{ padding: space[4] }, columna]}
           renderItem={renderHoja}
         />
       )}

@@ -4,7 +4,7 @@ import { Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { ChevronRight, FilePen, MapPin, MessageCircle, Pencil, Phone, Plus } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, Segmented, StatusChip, TopBar, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
+import { Button, Notice, Segmented, StatusChip, TopBar, chipForEstado, formatImporte, useColumnaDeFormulario, useInsetInferior } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -40,6 +40,7 @@ const SOLAPAS: { value: Solapa; label: string }[] = [
  */
 export function FichaProveedor({ id, conBarra = false }: { id: string; conBarra?: boolean }) {
   const insetInferior = useInsetInferior()
+  const columna = useColumnaDeFormulario()
   const c = useColors()
   const router = useRouter()
   const { canUpdate, canRead, canCreate } = usePermissions()
@@ -96,7 +97,7 @@ export function FichaProveedor({ id, conBarra = false }: { id: string; conBarra?
           actions={puedeEditar ? [{ icon: Pencil, accessibilityLabel: 'Editar', onPress: alEditar }] : []}
         />
       ) : null}
-      <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[4] }}>
+      <ScrollView testID="ficha-scroll" contentContainerStyle={[{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[4] }, columna]}>
         {!conBarra ? (
           <View style={{ gap: space[1] }}>
             <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{proveedor.razonSocial}</Text>

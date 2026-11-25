@@ -81,7 +81,7 @@ describe('Deudores en Cuentas', () => {
   it('lista los clientes que deben con su vendedor, desde GET /deudas/clientes', async () => {
     await abrirDeudores()
 
-    expect(await screen.findByText('Graciela Ruiz', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/Graciela Ruiz/, {}, ESPERA)).toBeTruthy()
     expect(screen.getByText(/Lucía Ferreyra/)).toBeTruthy()
     expect(screen.getAllByText($(186420)).length).toBeGreaterThan(0)
     const p = ultimoPedido()
@@ -89,6 +89,26 @@ describe('Deudores en Cuentas', () => {
     expect(p.get('PageSize')).toBe('20')
     expect(p.get('VendedorId')).toBeNull()
     expect(p.get('SearchTerm')).toBeNull()
+  })
+
+  // MC-4 (maqueta aprobada 2026-11-24): la dirección identifica al cliente; el nombre va en la línea de abajo.
+  it('MC-4: la fila muestra la dirección primero, "Debe" con el importe y el nombre debajo; el CUIT no va en la lista', async () => {
+    deudas = () => paginaDeDeudas([deudor({ direccion: 'Av. Siempreviva 742' })])
+    await abrirDeudores()
+
+    expect(await screen.findByText('Av. Siempreviva 742', {}, ESPERA)).toBeTruthy()
+    expect(screen.getByText('Debe')).toBeTruthy()
+    expect(screen.getAllByText($(186420)).length).toBeGreaterThan(0)
+    expect(screen.getByText(/Graciela Ruiz · Lucía Ferreyra/)).toBeTruthy()
+    expect(screen.queryByText(/CUIT/)).toBeNull()
+  })
+
+  it('MC-4: sin dirección (o sin que el servidor la mande) dice "Sin dirección cargada" y el nombre queda debajo', async () => {
+    deudas = () => paginaDeDeudas([deudor()])
+    await abrirDeudores()
+
+    expect(await screen.findByText('Sin dirección cargada', {}, ESPERA)).toBeTruthy()
+    expect(screen.getByText(/Graciela Ruiz · Lucía Ferreyra/)).toBeTruthy()
   })
 
   it('sin MOD_PAGOS:Read (el permiso de la pestaña Deudas de la web) no se ofrece la vista', async () => {
@@ -103,17 +123,17 @@ describe('Deudores en Cuentas', () => {
   it('pide la página siguiente al llegar al final', async () => {
     deudas = (url) => (url.includes('PageNumber=2') ? paginaDeDeudas([deudor({ socioId: 'c2', razonSocial: 'Almacén Sur' })], 2, 2) : paginaDeDeudas([deudor()], 1, 2))
     await abrirDeudores()
-    await screen.findByText('Graciela Ruiz', {}, ESPERA)
+    await screen.findByText(/Graciela Ruiz/, {}, ESPERA)
 
     fireEvent(screen.getByTestId('lista-deudores'), 'onEndReached')
 
-    expect(await screen.findByText('Almacén Sur', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/Almacén Sur/, {}, ESPERA)).toBeTruthy()
     expect(ultimoPedido().get('PageNumber')).toBe('2')
   })
 
   it('la búsqueda va al servidor como SearchTerm', async () => {
     await abrirDeudores()
-    await screen.findByText('Graciela Ruiz', {}, ESPERA)
+    await screen.findByText(/Graciela Ruiz/, {}, ESPERA)
 
     await userEvent.type(screen.getByLabelText('Buscar deudor'), 'ruiz')
 
@@ -122,7 +142,7 @@ describe('Deudores en Cuentas', () => {
 
   it('filtra por vendedor con la lista de /ventas/vendedores (VendedorId)', async () => {
     await abrirDeudores()
-    await screen.findByText('Graciela Ruiz', {}, ESPERA)
+    await screen.findByText(/Graciela Ruiz/, {}, ESPERA)
 
     await userEvent.press(screen.getByRole('button', { name: 'Vendedor: Todos' }))
     await userEvent.press(await screen.findByRole('radio', { name: 'Tomás Gil' }, ESPERA))
@@ -134,7 +154,7 @@ describe('Deudores en Cuentas', () => {
   it('sin MOD_VENTAS:Read (lo pide /ventas/vendedores) no hay filtro por vendedor; el servidor ya acota la cartera', async () => {
     conPermisos(TODOS.filter(p => p.module !== 'MOD_VENTAS'))
     await abrirDeudores()
-    await screen.findByText('Graciela Ruiz', {}, ESPERA)
+    await screen.findByText(/Graciela Ruiz/, {}, ESPERA)
 
     expect(screen.queryByRole('button', { name: /^Vendedor:/ })).toBeNull()
     expect(api.get).not.toHaveBeenCalledWith('/api/v1/Ventas/vendedores')
@@ -161,7 +181,7 @@ describe('Deudores en Cuentas', () => {
   it('tocar un deudor abre su cuenta corriente', async () => {
     await abrirDeudores()
 
-    await userEvent.press(await screen.findByRole('button', { name: /^Graciela Ruiz, debe/ }, ESPERA))
+    await userEvent.press(await screen.findByRole('button', { name: /Graciela Ruiz, debe/ }, ESPERA))
 
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/[id]', params: { id: 'c1' } })
   })
@@ -211,7 +231,7 @@ describe('Estado de cuenta en PDF o Excel', () => {
   it('sin MOD_CC ni MOD_CLIENTES (los del export) no se ofrece la acción', async () => {
     conPermisos([{ module: 'MOD_PAGOS', canRead: true }])
     await abrirDeudores()
-    await screen.findByText('Graciela Ruiz', {}, ESPERA)
+    await screen.findByText(/Graciela Ruiz/, {}, ESPERA)
 
     expect(screen.queryByLabelText('Estado de cuenta de Graciela Ruiz')).toBeNull()
   })
@@ -219,7 +239,7 @@ describe('Estado de cuenta en PDF o Excel', () => {
   it('un cliente cuya cuenta el servidor no deja ver no ofrece el archivo (daría 403)', async () => {
     deudas = () => paginaDeDeudas([deudor({ puedeVerCuentaCorriente: false })])
     await abrirDeudores()
-    await screen.findByText('Graciela Ruiz', {}, ESPERA)
+    await screen.findByText(/Graciela Ruiz/, {}, ESPERA)
 
     expect(screen.queryByLabelText('Estado de cuenta de Graciela Ruiz')).toBeNull()
   })

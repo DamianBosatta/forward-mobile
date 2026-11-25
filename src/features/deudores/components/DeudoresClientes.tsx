@@ -9,7 +9,7 @@ import { ErrorDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useVendedores } from '@/libs/api-client/ventas'
-import { formatearCuit } from '@/libs/reglas/cuit'
+import { direccionDeEntrega } from '@/features/clientes/lib/cliente'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
@@ -121,24 +121,31 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
   )
 }
 
-/** Un deudor por fila: razón social y monto, vendedor y CUIT, chip de antigüedad; el archivo como acción de 44 pt. */
+/** Un deudor por fila: dirección y "Debe" con el monto, razón social y vendedor, chip de antigüedad (el CUIT queda en la ficha); el archivo como acción de 44 pt. */
 const FilaDeDeudor = memo(function FilaDeDeudor({ deudor, conArchivo, onAbrir: abrir, onEstadoDeCuenta: pedir }: { deudor: Deudor; conArchivo: boolean; onAbrir: (socioId: string) => void; onEstadoDeCuenta: (d: Deudor) => void }) {
   const onAbrir = deudor.puedeVerCuentaCorriente ? () => abrir(deudor.socioId) : undefined
   const onEstadoDeCuenta = conArchivo && deudor.puedeVerCuentaCorriente ? () => pedir(deudor) : undefined
   const c = useColors()
   const monto = formatImporte(deudor.saldoDeuda, { moneda: deudor.moneda })
   const vendedor = deudor.vendedorNombre ?? 'Sin vendedor'
-  const cuit = formatearCuit(deudor.cuit)
+  // MC-4: la dirección identifica al cliente; sin ella, "Sin dirección cargada" y el nombre queda en la línea de abajo.
+  const direccion = direccionDeEntrega(deudor)
   const antiguedad = chipAntiguedadDeuda(deudor.diasDeudaMasVieja)?.texto
   return (
     <FilaDeSocio
-      titulo={deudor.razonSocial}
+      titulo={direccion}
       lineasTitulo={2}
-      derecha={<Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{monto}</Text>}
-      linea2={[vendedor, cuit ? `CUIT ${cuit}` : null].filter(Boolean).join(' · ')}
+      derecha={
+        // MC-4: "Debe" sobre el importe, como en la tarjeta de cliente (MP-1).
+        <View testID="saldo-deudor" style={{ alignItems: 'flex-end' }}>
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Debe</Text>
+          <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{monto}</Text>
+        </View>
+      }
+      linea2={[deudor.razonSocial, vendedor].join(' · ')}
       extra={<ChipAntiguedadDeuda dias={deudor.diasDeudaMasVieja} />}
       accion={onEstadoDeCuenta ? { icono: FileText, label: `Estado de cuenta de ${deudor.razonSocial}`, hint: 'PDF o Excel para compartir', onPress: onEstadoDeCuenta } : undefined}
-      accessibilityLabel={[`${deudor.razonSocial}, debe ${monto}`, vendedor, antiguedad].filter(Boolean).join(', ')}
+      accessibilityLabel={[`${direccion}, ${deudor.razonSocial}, debe ${monto}`, vendedor, antiguedad].filter(Boolean).join(', ')}
       onPress={onAbrir}
       chevron={!!onAbrir}
     />

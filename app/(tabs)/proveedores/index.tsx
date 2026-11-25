@@ -5,7 +5,7 @@ import { RefreshControl, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Fab, Notice, TopBar, useInsetInferior, useMenuLeading } from '@/core/ui/fw'
+import { Fab, Notice, TopBar, useColumnaDeFormulario, useInsetInferior, useMenuLeading } from '@/core/ui/fw'
 import { espacioBajoElFab } from '@/core/ui/fw/espacioDelFab'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
@@ -35,6 +35,7 @@ export default function ProveedoresScreen() {
   const router = useRouter()
   const leading = useMenuLeading()
   const { width } = useResponsive()
+  const columna = useColumnaDeFormulario()
   const { canCreate } = usePermissions()
   const [busqueda, setBusqueda] = useFiltroPersistente('proveedores.busqueda', '')
   const [abierto, setAbierto] = useState<string | null>(null)
@@ -109,6 +110,13 @@ export default function ProveedoresScreen() {
     </View>
   )
 
+  // P17 A (MC-28): el buscador usa la misma columna que la lista (en dos paneles, dentro de la columna de la lista).
+  const buscador = (
+    <View testID="buscador-proveedores" style={columna}>
+      <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} etiqueta="Buscar proveedor" placeholder="Nombre o CUIT" />
+    </View>
+  )
+
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
@@ -116,11 +124,11 @@ export default function ProveedoresScreen() {
         subtitle="A quién le compramos"
         leading={leading}
       />
-      <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} etiqueta="Buscar proveedor" placeholder="Nombre o CUIT" />
+      {dosPaneles ? null : buscador}
 
       {dosPaneles ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
-          <View style={{ width: 420, borderRightWidth: 1, borderRightColor: c.border }}>{lista}</View>
+          <View testID="columna-lista-proveedores" style={{ width: 420, borderRightWidth: 1, borderRightColor: c.border }}>{buscador}{lista}</View>
           <View style={{ flex: 1 }}>
             {abierto ? (
               <FichaProveedor key={abierto} id={abierto} />

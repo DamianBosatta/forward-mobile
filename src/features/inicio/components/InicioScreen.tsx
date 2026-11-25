@@ -8,7 +8,7 @@ import { puedeVerVentas } from '@/src/components/layout/menuModules'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
-import { Button, StatusChip, TopBar, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
+import { Button, StatusChip, TopBar, chipForEstado, formatImporte, useColumnaDeFormulario, useInsetInferior } from '@/core/ui/fw'
 import { useMenuLeading } from '@/core/ui/fw/useMenuLeading'
 import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/core/utils/fecha'
@@ -34,8 +34,9 @@ export function InicioScreen() {
   const accionAvisos = useAccionAvisos()
   const menuLeading = useMenuLeading()
   const insetInferior = useInsetInferior()
-  const { width, isTablet } = useResponsive()
-  const tablet = width >= 600
+  const { isTablet } = useResponsive()
+  // P17 A: en tablet Inicio es una sola columna centrada de FORM_MAX_WIDTH (640); en teléfono no cambia nada.
+  const columna = useColumnaDeFormulario()
   const { user, canDo } = useAuthStore()
   const pendientes = usePendientesInicio()
 
@@ -64,8 +65,6 @@ export function InicioScreen() {
   const cifras = useCifrasGenerales(canDo('MOD_PAGOS', 'read'), canDo('MOD_VENTAS', 'read'))
   // Rutas activas: hojas de ruta En curso (EstadoHojaRuta.EnCurso = 2), solo con acceso a Viajes.
   const rutas = useHojasDeRuta({ estado: 2 }, { enabled: canDo('MOD_VIAJES', 'read') })
-  // Tablet: "Reciente" en dos columnas (plan §8), alternando para conservar el orden de lectura.
-  const columnas = tablet ? [ventasHoy.filter((_, i) => i % 2 === 0), ventasHoy.filter((_, i) => i % 2 === 1)] : [ventasHoy]
 
   const [refrescando, setRefrescando] = useState(false)
   const refrescar = useCallback(async () => {
@@ -115,7 +114,7 @@ export function InicioScreen() {
       />
       <ScrollView
         testID="inicio-scroll"
-        contentContainerStyle={{ paddingTop: space[4], gap: space[4], paddingBottom: insetInferior + space[4] }}
+        contentContainerStyle={[{ paddingTop: space[4], gap: space[4], paddingBottom: insetInferior + space[4] }, columna]}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={c.brand} />}
       >
         {/* Depósito de la sesión (S8): solo con CAP_VER_TODOS_LOS_DEPOSITOS; sin ella no ocupa lugar. */}
@@ -162,16 +161,12 @@ export function InicioScreen() {
               ) : ventasHoy.length === 0 ? (
                 recientes.isLoading ? <BloqueCargando accessibilityLabel="Cargando las ventas de hoy" /> : <TarjetaDeTexto texto="Todavía no hay ventas hoy." />
               ) : (
-                <View testID="inicio-recientes" style={{ flexDirection: 'row', gap: space[3], alignItems: 'flex-start' }}>
-                  {columnas.map((col, i) => (
-                    <View key={i} style={{ flex: 1 }}>
-                      <ListaEnTarjeta>
-                        {col.map((v) => (
-                          <FilaDeVenta key={v.id} venta={v} onPress={() => router.push(`/(tabs)/ventas/${v.id}`)} />
-                        ))}
-                      </ListaEnTarjeta>
-                    </View>
-                  ))}
+                <View testID="inicio-recientes">
+                  <ListaEnTarjeta>
+                    {ventasHoy.map((v) => (
+                      <FilaDeVenta key={v.id} venta={v} onPress={() => router.push(`/(tabs)/ventas/${v.id}`)} />
+                    ))}
+                  </ListaEnTarjeta>
                 </View>
               )}
             </SeccionDeInicio>

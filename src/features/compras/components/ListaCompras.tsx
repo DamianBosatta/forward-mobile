@@ -223,15 +223,21 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
     />
   )
 
+  // P17 A (MV-26, MC-28): en tablet horizontal el selector de pestañas va en la columna de la lista, no cruza los dos paneles.
+  const selector = (
+    <View testID="selector-pestanas" style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
+      <Segmented accessibilityLabel="Pestaña" options={PESTANAS} value={l.pestana} onChange={(p) => { l.setPestana(p); setElegida(null) }} />
+    </View>
+  )
+
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Compras" leading={leading} />
-      <View style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
-        <Segmented accessibilityLabel="Pestaña" options={PESTANAS} value={l.pestana} onChange={(p) => { l.setPestana(p); setElegida(null) }} />
-      </View>
+      {isTabletLandscape ? null : selector}
       <TwoPane
         list={
           <View style={{ flex: 1 }}>
+            {isTabletLandscape ? selector : null}
             {l.pestana === 'borradores' ? listaBorradores : listaCompras}
             {/* La barra de accesos rápidos ya no trae el "+" (lámina CalleMiDia): la compra nueva sale de acá, en teléfono y en tablet. */}
             {canDo('MOD_COMPRAS', 'create') ? (

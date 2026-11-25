@@ -199,6 +199,18 @@ describe('lista de compras', () => {
     expect(screen.getAllByLabelText('Nueva venta')).toHaveLength(1)
   })
 
+  it('en tablet horizontal el selector de pestañas queda dentro de la columna de la lista (P17 A, MC-28)', async () => {
+    pantalla(1200)
+    await screen.findByText('Elegí una compra para ver el detalle.')
+    expect(within(screen.getByTestId('two-pane-list')).getByTestId('selector-pestanas')).toBeTruthy()
+  })
+
+  it('en el teléfono el selector de pestañas sigue arriba, fuera de la lista', async () => {
+    pantalla(390)
+    expect(await screen.findByTestId('selector-pestanas')).toBeTruthy()
+    expect(within(screen.getByTestId('two-pane-list')).queryByTestId('selector-pestanas')).toBeNull()
+  })
+
   it('en tablet horizontal el detalle se abre al costado, sin salir de la lista', async () => {
     pantalla(1200)
     expect(await screen.findByText('Elegí una compra para ver el detalle.')).toBeTruthy()

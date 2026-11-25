@@ -1,5 +1,5 @@
 import React from 'react'
-import { Linking } from 'react-native'
+import { Linking, StyleSheet } from 'react-native'
 import { screen, userEvent } from '@testing-library/react-native'
 import { FichaCliente, AVISO_CONDICION_PAGO } from '../components/FichaCliente'
 import { api } from '@/core/api/client'
@@ -10,6 +10,8 @@ const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: jest.fn() }) }))
 jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: '' }))
 
+const mockAncho = jest.fn(() => 390)
+jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: mockAncho(), isTablet: mockAncho() >= 600, isTabletLandscape: mockAncho() >= 900, isLarge: mockAncho() >= 600 }) }))
 
 const get = api.get as jest.Mock
 const detalle = (extra = {}) => ({
@@ -32,6 +34,7 @@ const abrir = async (solapa: string) => userEvent.press(await screen.findByRole(
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockAncho.mockReturnValue(390)
   jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
   conPermisos([{ module: 'MOD_CLIENTES', canRead: true, canUpdate: true }])
   servidor(detalle())
@@ -309,5 +312,23 @@ describe('jerarquía de botones de la ficha', () => {
 
     const titulo = await screen.findByRole('header', { name: 'Av. del Valle 89' })
     expect(titulo.props.numberOfLines).toBe(2)
+  })
+})
+
+describe('ancho de la ficha (P17 A, MC-35)', () => {
+  const contenido = () => StyleSheet.flatten(screen.getByTestId('ficha-scroll').props.contentContainerStyle)
+
+  it('en tablet va en una columna centrada de 640', async () => {
+    mockAncho.mockReturnValue(1194)
+    renderConQuery(<FichaCliente id="c1" />)
+    await screen.findByTestId('ficha-scroll')
+    expect(contenido().maxWidth).toBe(640)
+    expect(contenido().alignSelf).toBe('center')
+  })
+
+  it('en teléfono no cambia: sin ancho máximo', async () => {
+    renderConQuery(<FichaCliente id="c1" />)
+    await screen.findByTestId('ficha-scroll')
+    expect(contenido().maxWidth).toBeUndefined()
   })
 })
