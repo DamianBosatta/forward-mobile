@@ -66,6 +66,12 @@ export interface SharePdfOptions {
   onProgress?: (progreso: { written: number; total: number }) => void
   /** Aborting it cancels the download: the result is `reason: 'cancelled'` and the partial file is removed. */
   signal?: AbortSignal
+  /**
+   * Streamed download only: called once the file is fully downloaded (not aborted, not failed), right before the OS
+   * share sheet opens. `shareAsync` only resolves when the user dismisses that sheet, so a caller that shows a
+   * blocking "generating" UI closes it here instead of waiting for `sharePdf` to return.
+   */
+  onDownloaded?: () => void
 }
 
 
@@ -76,6 +82,7 @@ export interface SharePdfOptions {
 async function descargarConProgreso(url: string, uri: string, options: SharePdfOptions): Promise<SharePdfResult> {
   const { onProgress, signal } = options
   const borrar = () => FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {})
+  let totalConocido = 0
   const cancelada = (): SharePdfResult => ({ ok: false, reason: 'cancelled', message: 'Descarga cancelada.' })
   if (signal?.aborted) return cancelada()
 
@@ -88,7 +95,10 @@ async function descargarConProgreso(url: string, uri: string, options: SharePdfO
       url,
       uri,
       { headers: tokenActual() ? { Authorization: `Bearer ${tokenActual()}` } : {} },
-      (p) => onProgress?.({ written: p.totalBytesWritten, total: p.totalBytesExpectedToWrite > 0 ? p.totalBytesExpectedToWrite : 0 }),
+      (p) => {
+        totalConocido = p.totalBytesExpectedToWrite > 0 ? p.totalBytesExpectedToWrite : 0
+        onProgress?.({ written: p.totalBytesWritten, total: totalConocido })
+      },
     )
     let motivo: 'cancelada' | 'tiempo' | null = null
     const parar = (m: 'cancelada' | 'tiempo') => {
@@ -140,6 +150,8 @@ async function descargarConProgreso(url: string, uri: string, options: SharePdfO
     await borrar()
     return { ok: false, reason: 'network', status: r.status, message: `Error al descargar el archivo (${r.status}).` }
   }
+  // The native stream may end without a last event at 100 %: report completion so the bar does not stay short.
+  if (totalConocido > 0) onProgress?.({ written: totalConocido, total: totalConocido })
   return { ok: true }
 }
 
@@ -190,6 +202,7 @@ export async function sharePdf(url: string, fileName: string, options?: SharePdf
       FileSystem.deleteAsync(archivo, { idempotent: true }).catch(() => {})
       return { ok: false, reason: 'cancelled', message: 'Descarga cancelada.' }
     }
+    options.onDownloaded?.()
     try {
       await Sharing.shareAsync(archivo, tipoDeArchivo(fileName))
     } catch {

@@ -106,7 +106,12 @@ function ExportarCatalogoPdf({ busqueda, soloConStock, conOferta, categoriaId, t
       novedadesDesde: ventana === 'ninguna' ? undefined : novedadesDesde(Number(ventana)),
       ...(formato === 'Lista' ? paramsDeDescuentos(descuentos) : {}),
     })
-    const r = await sharePdf(url, `catalogo-${novedadesDesde(0)}.pdf`, { onProgress: setProgreso, signal: control.signal })
+    const r = await sharePdf(url, `catalogo-${novedadesDesde(0)}.pdf`, {
+      onProgress: setProgreso,
+      signal: control.signal,
+      // The share sheet stays open until the user dismisses it: the blocking modal must not sit behind it.
+      onDownloaded: () => setGenerando(false),
+    })
     // Cancelled by the user: the modal is already closed and there is nothing to report.
     if (control.signal.aborted || (!r.ok && r.reason === 'cancelled')) return
     descarga.current = null

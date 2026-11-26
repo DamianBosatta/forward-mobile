@@ -308,6 +308,52 @@ describe('sharePdf — download with progress and cancel', () => {
     expect(mockShareAsync).not.toHaveBeenCalled()
   })
 
+  it('onDownloaded runs once the file is downloaded and before the share sheet opens', async () => {
+    descarga([{ status: 200 }])
+    const orden: string[] = []
+    mockShareAsync.mockImplementation(() => {
+      orden.push('share')
+      return Promise.resolve()
+    })
+    const r = await sharePdf('https://api.example.com/pdf', 'c.pdf', { onProgress: jest.fn(), onDownloaded: () => orden.push('downloaded') })
+    expect(r).toEqual({ ok: true })
+    expect(orden).toEqual(['downloaded', 'share'])
+  })
+
+  it('onDownloaded is not called when the download is cancelled or fails', async () => {
+    const onDownloaded = jest.fn()
+    descarga([{ status: 500 }])
+    await sharePdf('https://api.example.com/pdf', 'c.pdf', { onProgress: jest.fn(), onDownloaded })
+    descarga([new Error('boom')])
+    await sharePdf('https://api.example.com/pdf', 'c.pdf', { onProgress: jest.fn(), onDownloaded })
+    const ac = new AbortController()
+    ac.abort()
+    await sharePdf('https://api.example.com/pdf', 'c.pdf', { signal: ac.signal, onDownloaded })
+    expect(onDownloaded).not.toHaveBeenCalled()
+  })
+
+  it('a share sheet failure after onDownloaded still returns the error', async () => {
+    descarga([{ status: 200 }])
+    mockShareAsync.mockRejectedValueOnce(new Error('no sheet'))
+    const onDownloaded = jest.fn()
+    const r = await sharePdf('https://api.example.com/pdf', 'c.pdf', { onProgress: jest.fn(), onDownloaded })
+    expect(onDownloaded).toHaveBeenCalledTimes(1)
+    expect(r).toEqual(expect.objectContaining({ ok: false, reason: 'unknown' }))
+  })
+
+  it('the last progress report reflects completion even if the native stream stopped short of 100 %', async () => {
+    const onProgress = jest.fn()
+    mockCreateDownload.mockImplementation((_u: string, _f: string, _o: unknown, cb: Cb) => ({
+      cancelAsync: jest.fn(),
+      downloadAsync: () => {
+        cb({ totalBytesWritten: 14, totalBytesExpectedToWrite: 200 })
+        return Promise.resolve({ status: 200, uri: 'file:///cache/c.pdf', headers: {} })
+      },
+    }))
+    await sharePdf('https://api.example.com/pdf', 'c.pdf', { onProgress })
+    expect(onProgress).toHaveBeenLastCalledWith({ written: 200, total: 200 })
+  })
+
   it('an already aborted signal does not start the download', async () => {
     descarga([{ status: 200 }])
     const ac = new AbortController()

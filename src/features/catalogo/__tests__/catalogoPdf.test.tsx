@@ -320,6 +320,26 @@ describe('Modal bloqueante "Generando catálogo"', () => {
     expect(signal.aborted).toBe(true)
   })
 
+  it('closes as soon as the file is downloaded, while the share sheet is still open', async () => {
+    // Like the real sharePdf: downloads, reports it, then waits on a share sheet that stays open.
+    mockSharePdf.mockImplementation(async (_u: string, _n: string, o?: { onDownloaded?: () => void }) => {
+      o?.onDownloaded?.()
+      return new Promise(() => {})
+    })
+    await generar()
+    await waitFor(() => expect(screen.queryByText('Generando catálogo')).toBeNull())
+  })
+
+  it('a share sheet failure after the download still shows the error', async () => {
+    mockSharePdf.mockImplementation(async (_u: string, _n: string, o?: { onDownloaded?: () => void }) => {
+      o?.onDownloaded?.()
+      return { ok: false, reason: 'unknown', message: 'No se pudo abrir el panel para compartir.' }
+    })
+    await generar()
+    expect(await screen.findByText('No se pudo abrir el panel para compartir.')).toBeTruthy()
+    expect(screen.queryByText('Generando catálogo')).toBeNull()
+  })
+
   it('closes when the file is shared', async () => {
     const c = compartirColgado()
     await generar()
