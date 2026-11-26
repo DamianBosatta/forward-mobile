@@ -8649,13 +8649,14 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
+                    PageNumber?: number;
+                    PageSize?: number;
                     FueraDeTermino?: boolean;
                     ClienteId?: string;
                     Desde?: string;
                     Hasta?: string;
                     Search?: string;
-                    PageNumber?: number;
-                    PageSize?: number;
+                    ConFactura?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -8672,6 +8673,50 @@ export interface paths {
                         "text/plain": components["schemas"]["PedidoSinFacturaDtoPaginatedResponseResponse"];
                         "application/json": components["schemas"]["PedidoSinFacturaDtoPaginatedResponseResponse"];
                         "text/json": components["schemas"]["PedidoSinFacturaDtoPaginatedResponseResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturas/pedidos-sin-factura/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    FueraDeTermino?: boolean;
+                    ClienteId?: string;
+                    Desde?: string;
+                    Hasta?: string;
+                    Search?: string;
+                    ConFactura?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResumenPedidosSinFacturaDtoResponse"];
+                        "application/json": components["schemas"]["ResumenPedidosSinFacturaDtoResponse"];
+                        "text/json": components["schemas"]["ResumenPedidosSinFacturaDtoResponse"];
                     };
                 };
             };
@@ -25139,6 +25184,7 @@ export interface components {
             /** Format: date-time */
             documentadaEn?: string | null;
             salidaExigeDocumentacion: boolean;
+            caeAutomatico: boolean;
             /** Format: int32 */
             remitosEmitidos: number;
             /** Format: int32 */
@@ -25277,6 +25323,11 @@ export interface components {
             detalle?: string | null;
             /** Format: int32 */
             intentos: number;
+            arcaHabilitada: boolean;
+            puedePedirCae: boolean;
+            esperaRespuestaArca: boolean;
+            motivoBloqueo?: string | null;
+            caeEstado?: components["schemas"]["EstadoCaeFactura"];
         };
         EmisionArcaDtoResponse: {
             /** Format: int32 */
@@ -25408,6 +25459,8 @@ export interface components {
         EstadoAcreditacionTarjeta: "Pendiente" | "Acreditada";
         /** @enum {string} */
         EstadoArcaSolicitud: "Pendiente" | "Enviada" | "Autorizada" | "Rechazada" | "EnDuda" | "Liberada";
+        /** @enum {string} */
+        EstadoCaeFactura: "Pidiendo" | "Registrada" | "Rechazada" | "EnDuda" | "AutorizadaSinRegistrar" | "SinPedir";
         /** @enum {string} */
         EstadoCheque: "EnCartera" | "Depositado" | "Acreditado" | "Rechazado" | "Endosado" | "Entregado";
         /** @enum {string} */
@@ -27191,6 +27244,10 @@ export interface components {
             ventaId: string;
             codigoVenta: string;
             cliente: string;
+            direccion?: string | null;
+            nombre: string;
+            /** Format: double */
+            total?: number | null;
             sinFactura: boolean;
             /** Format: uuid */
             remitoId?: string | null;
@@ -27202,6 +27259,12 @@ export interface components {
             facturaTipo?: components["schemas"]["TipoComprobanteEmitido"];
             facturaNumero?: string | null;
             estadoFactura?: components["schemas"]["EstadoFactura"];
+            facturaArcaHabilitada: boolean;
+            caeEstado?: components["schemas"]["EstadoCaeFactura"];
+            caeDetalle?: string | null;
+            cae?: string | null;
+            /** Format: date */
+            caeVencimiento?: string | null;
             saleSinFacturaAutorizada: boolean;
             saleSinFacturaMotivo?: string | null;
             /** Format: date-time */
@@ -27359,6 +27422,8 @@ export interface components {
             /** Format: uuid */
             clienteId: string;
             cliente: string;
+            nombre: string;
+            direccion?: string | null;
             /** Format: double */
             total: number;
             /** Format: double */
@@ -27366,6 +27431,12 @@ export interface components {
             conFactura: boolean;
             /** Format: double */
             ivaQueSeSuma?: number | null;
+            /** Format: double */
+            netoAFacturar?: number | null;
+            /** Format: double */
+            ivaAFacturar?: number | null;
+            /** Format: double */
+            totalAFacturar?: number | null;
             /** Format: date */
             fechaEntrega: string;
             /** Format: date */
@@ -28866,6 +28937,36 @@ export interface components {
             nivel?: string | null;
             /** Format: int32 */
             cantidad?: number;
+        };
+        ResumenPedidosSinFacturaDto: {
+            /** Format: int32 */
+            cantidad: number;
+            /** Format: double */
+            neto: number;
+            /** Format: double */
+            iva: number;
+            /** Format: double */
+            total: number;
+            /** Format: int32 */
+            sinImporte: number;
+            /** Format: int32 */
+            esteMes: number;
+            /** Format: int32 */
+            esteMesConFactura: number;
+            /** Format: int32 */
+            fueraDeTermino: number;
+            /** Format: int32 */
+            fueraDeTerminoConFactura: number;
+        };
+        ResumenPedidosSinFacturaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ResumenPedidosSinFacturaDto"];
+            codigo?: string | null;
         };
         ResumenRendicionViajeDto: {
             /** Format: uuid */
