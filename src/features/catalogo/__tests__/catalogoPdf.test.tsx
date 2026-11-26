@@ -1,5 +1,6 @@
 import React from 'react'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { Modal } from 'react-native'
+import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { conTema, estilo } from '@/core/ui/fw/__testing__/tema'
 import { themeColors, radii } from '@/libs/theme'
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
@@ -224,5 +225,114 @@ describe('Generar', () => {
     await user.press(screen.getByText('Informativo'))
     await user.press(screen.getByText('Generar catálogo'))
     await waitFor(() => expect(mockSharePdf).toHaveBeenCalledTimes(1))
+  })
+})
+
+describe('Modal bloqueante "Generando catálogo"', () => {
+  /** A share that stays pending until the test settles it; it honors the signal like the real one. */
+  function compartirColgado() {
+    let resolver: (r: unknown) => void = () => {}
+    mockSharePdf.mockImplementation(
+      (_u: string, _n: string, o?: { signal?: AbortSignal }) =>
+        new Promise((res) => {
+          resolver = res
+          o?.signal?.addEventListener('abort', () => res({ ok: false, reason: 'cancelled', message: 'Descarga cancelada.' }))
+        }),
+    )
+    return { resolver: (r: unknown) => resolver(r) }
+  }
+
+  async function generar(props: Partial<React.ComponentProps<typeof BotonCatalogoPdf>> = {}) {
+    const user = userEvent.setup()
+    renderBoton(props)
+    await user.press(screen.getByText('Exportar PDF'))
+    await user.press(await screen.findByText('Generar catálogo'))
+    await waitFor(() => expect(mockSharePdf).toHaveBeenCalledTimes(1))
+    return user
+  }
+
+  describe.each(['light', 'dark'] as const)('(%s)', (tema) => {
+    beforeEach(() => conTema(tema))
+
+    it('while generating shows the title, the product count, the elapsed time and "Armando el catálogo…"', async () => {
+      compartirColgado()
+      await generar({ totalCount: 124 })
+      expect(await screen.findByText('Generando catálogo')).toBeTruthy()
+      expect(screen.getByText('124 productos')).toBeTruthy()
+      expect(screen.getByText('Tiempo: 00:00')).toBeTruthy()
+      expect(screen.getByText('Armando el catálogo…')).toBeTruthy()
+      expect(screen.queryByLabelText('Avance de la descarga del catálogo')).toBeNull()
+    })
+  })
+
+  it('shows a real bar with the percentage once the total size is known', async () => {
+    compartirColgado()
+    await generar({ totalCount: 3 })
+    const opciones = mockSharePdf.mock.calls[0][2] as { onProgress: (p: { written: number; total: number }) => void }
+    act(() => opciones.onProgress({ written: 250, total: 1000 }))
+    expect(await screen.findByText('Descargando… 25 %')).toBeTruthy()
+    expect(screen.getByLabelText('Avance de la descarga del catálogo')).toBeTruthy()
+  })
+
+  it('stays indeterminate when the size is unknown', async () => {
+    compartirColgado()
+    await generar()
+    const opciones = mockSharePdf.mock.calls[0][2] as { onProgress: (p: { written: number; total: number }) => void }
+    act(() => opciones.onProgress({ written: 250, total: 0 }))
+    expect(await screen.findByText('Descargando…')).toBeTruthy()
+    expect(screen.queryByLabelText('Avance de la descarga del catálogo')).toBeNull()
+  })
+
+  it('the Android back button does not dismiss it', async () => {
+    compartirColgado()
+    await generar()
+    await screen.findByText('Generando catálogo')
+    type Nodo = { type: unknown; props: { onRequestClose?: () => void }; parent: Nodo | null }
+    let nodo = screen.getByLabelText('Generando catálogo') as unknown as Nodo | null
+    while (nodo && nodo.type !== Modal) nodo = nodo.parent
+    expect(nodo).not.toBeNull()
+    act(() => nodo?.props.onRequestClose?.())
+    expect(screen.getByText('Generando catálogo')).toBeTruthy()
+    expect(screen.getByText('Generando catálogo')).toBeTruthy()
+  })
+
+  it('Cancelar aborts the download, closes the modal and shows no error', async () => {
+    compartirColgado()
+    const user = await generar()
+    await user.press(await screen.findByText('Cancelar'))
+    await waitFor(() => expect(screen.queryByText('Generando catálogo')).toBeNull())
+    const { signal } = mockSharePdf.mock.calls[0][2] as { signal: AbortSignal }
+    expect(signal.aborted).toBe(true)
+    expect(screen.queryByText('Descarga cancelada.')).toBeNull()
+    expect(screen.queryByText(/No se pudo|Error/)).toBeNull()
+  })
+
+  it('leaving the screen aborts the download so the share sheet does not open afterwards', async () => {
+    compartirColgado()
+    const user = userEvent.setup()
+    const vista = renderBoton({ totalCount: 5 })
+    await user.press(screen.getByText('Exportar PDF'))
+    await user.press(await screen.findByText('Generar catálogo'))
+    await waitFor(() => expect(mockSharePdf).toHaveBeenCalledTimes(1))
+    const { signal } = mockSharePdf.mock.calls[0][2] as { signal: AbortSignal }
+    expect(signal.aborted).toBe(false)
+    vista.unmount()
+    expect(signal.aborted).toBe(true)
+  })
+
+  it('closes when the file is shared', async () => {
+    const c = compartirColgado()
+    await generar()
+    await screen.findByText('Generando catálogo')
+    await act(async () => c.resolver({ ok: true }))
+    await waitFor(() => expect(screen.queryByText('Generando catálogo')).toBeNull())
+  })
+
+  it('on a real error the modal closes and the message shows in the sheet', async () => {
+    const c = compartirColgado()
+    await generar()
+    await act(async () => c.resolver({ ok: false, reason: 'network', message: 'Error al descargar el archivo (500).' }))
+    expect(await screen.findByText('Error al descargar el archivo (500).')).toBeTruthy()
+    expect(screen.queryByText('Generando catálogo')).toBeNull()
   })
 })

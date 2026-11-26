@@ -124,7 +124,7 @@ export function configureApiClient(options: {
 
 // ── Refresh Token Flow ───────────────────────────────────────────────────────
 
-async function attemptRefresh(): Promise<boolean> {
+export async function attemptRefresh(): Promise<boolean> {
   // Si ya hay un refresh en curso, esperar su resultado (mutex)
   if (_isRefreshing && _refreshPromise) {
     return _refreshPromise
@@ -326,17 +326,33 @@ export interface OpcionesGet extends RequestInit {
 }
 
 /**
+ * The one policy for an authenticated request: try, and if it came back 401 renew the token once (shared mutex of
+ * `attemptRefresh`) and try once more. If the renewal fails it throws ApiError(401). It never loops.
+ */
+export async function reintentarTrasRenovar<T>(
+  intento: (esReintento: boolean) => Promise<T>,
+  noAutorizado: (resultado: T) => boolean,
+): Promise<T> {
+  const primero = await intento(false)
+  if (!noAutorizado(primero)) return primero
+  const refreshed = await attemptRefresh()
+  if (!refreshed) throw new ApiError(401, 'Sesión expirada')
+  return intento(true)
+}
+
+/**
  * The one place that sends an authenticated request and, on a 401, renews the token once (mutex shared with every
  * caller) and retries with it. If the renewal fails it throws ApiError(401). Returns the final response, ok or not.
  */
 async function enviarConRenovacion(url: string, options: RequestInit, headers: Headers, timeoutMs?: number): Promise<Response> {
-  const response = await fetchWithTimeout(url, { ...options, headers }, timeoutMs)
-  if (response.status !== 401) return response
-  const refreshed = await attemptRefresh()
-  if (!refreshed) throw new ApiError(401, 'Sesión expirada')
-  // Reintentar con el nuevo token
-  headers.set('Authorization', `Bearer ${_getToken()}`)
-  return fetchWithTimeout(url, { ...options, headers }, timeoutMs)
+  return reintentarTrasRenovar(
+    async (esReintento) => {
+      // Reintentar con el nuevo token
+      if (esReintento) headers.set('Authorization', `Bearer ${_getToken()}`)
+      return fetchWithTimeout(url, { ...options, headers }, timeoutMs)
+    },
+    (r) => r.status === 401,
+  )
 }
 
 /**
