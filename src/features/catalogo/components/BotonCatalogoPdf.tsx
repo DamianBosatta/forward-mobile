@@ -1,4 +1,4 @@
-import React, { useState, useSyncExternalStore } from 'react'
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { onlineManager } from '@tanstack/react-query'
 import { Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
@@ -9,6 +9,7 @@ import { RequirePermission } from '@/core/ui'
 import { getCatalogoPdfUrl, type FormatoCatalogoPdf } from '@/libs/api-client/productos'
 import { useListasPrecio } from '@/libs/api-client/catalogo'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
+import { GenerandoCatalogoModal, MODAL_FADE_MS, type ProgresoDeDescarga } from './GenerandoCatalogoModal'
 import { DIAS_DE_NOVEDADES, VENTANAS_DE_NOVEDADES, novedadesDesde } from '../lib/presentacion'
 import { DESCUENTOS_DISPONIBLES, DESCUENTOS_POR_DEFECTO, paramsDeDescuentos } from '../lib/listaDePrecios'
 
@@ -72,6 +73,25 @@ function ExportarCatalogoPdf({ busqueda, soloConStock, conOferta, categoriaId, t
   const [listaPrecioId, setListaPrecioId] = useState('')
   const [generando, setGenerando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [progreso, setProgreso] = useState<ProgresoDeDescarga | null>(null)
+  const descarga = useRef<AbortController | null>(null)
+  // Leaving the screen cancels the download: the share sheet must not open over whatever comes next.
+  // Resolves once the modal is closed for good; sharePdf waits on it before opening the share sheet.
+  const modalCerrado = useRef<(() => void) | null>(null)
+  useEffect(
+    () => () => {
+      descarga.current?.abort()
+      modalCerrado.current?.()
+    },
+    [],
+  )
+  // `generando` false is committed: let the native fade-out end (one frame + the fade) before releasing the share sheet.
+  useEffect(() => {
+    if (generando || !modalCerrado.current) return
+    const liberar = modalCerrado.current
+    modalCerrado.current = null
+    requestAnimationFrame(() => setTimeout(liberar, MODAL_FADE_MS))
+  }, [generando])
 
   const informativo = formato === 'Informativo'
   const listas = useListasPrecio(abierta && !informativo && puedeElegirLista)
@@ -88,6 +108,9 @@ function ExportarCatalogoPdf({ busqueda, soloConStock, conOferta, categoriaId, t
     if (motivo || generando) return
     setGenerando(true)
     setError(null)
+    setProgreso(null)
+    const control = new AbortController()
+    descarga.current = control
     const url = getCatalogoPdfUrl({
       search: busqueda,
       soloDisponibles: soloConStock,
@@ -98,10 +121,29 @@ function ExportarCatalogoPdf({ busqueda, soloConStock, conOferta, categoriaId, t
       novedadesDesde: ventana === 'ninguna' ? undefined : novedadesDesde(Number(ventana)),
       ...(formato === 'Lista' ? paramsDeDescuentos(descuentos) : {}),
     })
-    const r = await sharePdf(url, `catalogo-${novedadesDesde(0)}.pdf`)
+    const r = await sharePdf(url, `catalogo-${novedadesDesde(0)}.pdf`, {
+      onProgress: setProgreso,
+      signal: control.signal,
+      // The share sheet stays open until the user dismisses it: the blocking modal must not sit behind it, nor its
+      // last frame: the sheet opens only after the modal's fade-out (RN Modal onDismiss exists on iOS only).
+      onDownloaded: () =>
+        new Promise<void>((resolver) => {
+          modalCerrado.current = resolver
+          setGenerando(false)
+        }),
+    })
+    // Cancelled by the user: the modal is already closed and there is nothing to report.
+    if (control.signal.aborted || (!r.ok && r.reason === 'cancelled')) return
+    descarga.current = null
     setGenerando(false)
     if (r.ok) setAbierta(false)
     else setError(r.message)
+  }
+
+  const cancelar = () => {
+    descarga.current?.abort()
+    descarga.current = null
+    setGenerando(false)
   }
 
   const titulo = [typeScale.secundario, { color: c.text, fontFamily: FONT.semibold, fontWeight: '600' as const }]
@@ -110,6 +152,12 @@ function ExportarCatalogoPdf({ busqueda, soloConStock, conOferta, categoriaId, t
   return (
     <>
       <FiltroChip label="Exportar PDF" activo={false} onPress={() => setAbierta(true)} />
+      <GenerandoCatalogoModal
+        visible={generando}
+        totalProductos={informativo ? undefined : totalCount}
+        progreso={progreso}
+        onCancel={cancelar}
+      />
       <BottomSheet visible={abierta} onClose={() => setAbierta(false)} accessibilityLabel="Exportar el catálogo a PDF">
         <Text style={[typeScale.titulo, { color: c.text }]}>Exportar catálogo</Text>
 

@@ -12,8 +12,10 @@
 // the /legacy sub-path. The root export exposes only the new File/Directory API.
 import * as FileSystem from 'expo-file-system/legacy'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { ApiError, descargarConAuth } from '@/core/api/client'
+import { ApiError, DESCARGA_TIMEOUT_MS, descargarConAuth, reintentarTrasRenovar, tokenActual } from '@/core/api/client'
 import { esTiempoAgotado } from '@/core/api/errores'
+
+const SESION_EXPIRADA = 'Sesión expirada. Por favor, volvé a iniciar sesión.'
 
 // expo-sharing pulls in the ExpoSharing NATIVE module the moment it is evaluated. If the
 // installed dev/runtime build was compiled before expo-sharing was added to the project, a
@@ -45,7 +47,7 @@ function tipoDeArchivo(fileName: string): { mimeType: string; UTI: string } {
 
 export type SharePdfResult =
   | { ok: true }
-  | { ok: false; reason: 'auth' | 'network' | 'unavailable' | 'unknown'; message: string; status?: number }
+  | { ok: false; reason: 'auth' | 'network' | 'unavailable' | 'unknown' | 'cancelled'; message: string; status?: number }
 
 export interface SharePdfOptions {
   /**
@@ -57,6 +59,102 @@ export interface SharePdfOptions {
    * Request body, serialized as JSON. Only used when method is 'POST'.
    */
   body?: Record<string, unknown>
+  /**
+   * Download progress. Passing it (or `signal`) switches to a streamed download straight to the cache file
+   * (GET only): `total` is 0 when the server did not send Content-Length. Without it the download is the usual one.
+   */
+  onProgress?: (progreso: { written: number; total: number }) => void
+  /** Aborting it cancels the download: the result is `reason: 'cancelled'` and the partial file is removed. */
+  signal?: AbortSignal
+  /**
+   * Streamed download only: called once the file is fully downloaded (not aborted, not failed), right before the OS
+   * share sheet opens. `shareAsync` only resolves when the user dismisses that sheet, so a caller that shows a
+   * blocking "generating" UI closes it here instead of waiting for `sharePdf` to return. It may return a promise:
+   * the share sheet opens only after it resolves, so a native modal can finish dismissing first (otherwise its last
+   * frame stays frozen behind the sheet). Aborting while it is pending cancels the share.
+   */
+  onDownloaded?: () => void | Promise<void>
+}
+
+
+/**
+ * Streamed download to `uri` with progress and cancel. Same Bearer token, one 401 renewal (the shared mutex of
+ * `attemptRefresh`) and one retry, and the same 120 s limit as the fetch path. Removes the file on any failure.
+ */
+async function descargarConProgreso(url: string, uri: string, options: SharePdfOptions): Promise<SharePdfResult> {
+  const { onProgress, signal } = options
+  const borrar = () => FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {})
+  let totalConocido = 0
+  const cancelada = (): SharePdfResult => ({ ok: false, reason: 'cancelled', message: 'Descarga cancelada.' })
+  if (signal?.aborted) return cancelada()
+
+  const intento = async (esReintento: boolean): Promise<{ status: number } | 'cancelada' | 'tiempo' | 'error'> => {
+    // Also covers a cancel that landed while the token was being renewed: the abort event already fired by then.
+    if (signal?.aborted) return 'cancelada'
+    // The 401 attempt may have left a partial file (the error body).
+    if (esReintento) await borrar()
+    const descarga = FileSystem.createDownloadResumable(
+      url,
+      uri,
+      { headers: tokenActual() ? { Authorization: `Bearer ${tokenActual()}` } : {} },
+      (p) => {
+        totalConocido = p.totalBytesExpectedToWrite > 0 ? p.totalBytesExpectedToWrite : 0
+        onProgress?.({ written: p.totalBytesWritten, total: totalConocido })
+      },
+    )
+    let motivo: 'cancelada' | 'tiempo' | null = null
+    const parar = (m: 'cancelada' | 'tiempo') => {
+      motivo = m
+      descarga.cancelAsync().catch(() => {})
+    }
+    const alAbortar = () => parar('cancelada')
+    signal?.addEventListener('abort', alAbortar)
+    const reloj = setTimeout(() => parar('tiempo'), DESCARGA_TIMEOUT_MS)
+    try {
+      const r = await descarga.downloadAsync()
+      if (motivo) return motivo
+      return r ? { status: r.status } : 'error'
+    } catch {
+      return motivo ?? 'error'
+    } finally {
+      clearTimeout(reloj)
+      signal?.removeEventListener('abort', alAbortar)
+    }
+  }
+
+  let r: Awaited<ReturnType<typeof intento>>
+  try {
+    r = await reintentarTrasRenovar(intento, (x) => typeof x === 'object' && x.status === 401)
+  } catch (e) {
+    await borrar()
+    // Renewal failed: the session is over (ApiError 401), not a connectivity problem.
+    if (e instanceof ApiError && e.status === 401) return { ok: false, reason: 'auth', message: SESION_EXPIRADA }
+    return { ok: false, reason: 'network', message: 'No se pudo conectar al servidor. Verificá tu conexión.' }
+  }
+
+  if (r === 'cancelada') {
+    await borrar()
+    return cancelada()
+  }
+  if (r === 'tiempo') {
+    await borrar()
+    return { ok: false, reason: 'network', message: 'La descarga tardó demasiado. Probá de nuevo.' }
+  }
+  if (r === 'error') {
+    await borrar()
+    return { ok: false, reason: 'network', message: 'No se pudo conectar al servidor. Verificá tu conexión.' }
+  }
+  if (r.status === 401 || r.status === 403) {
+    await borrar()
+    return { ok: false, reason: 'auth', message: SESION_EXPIRADA }
+  }
+  if (r.status < 200 || r.status >= 300) {
+    await borrar()
+    return { ok: false, reason: 'network', status: r.status, message: `Error al descargar el archivo (${r.status}).` }
+  }
+  // The native stream may end without a last event at 100 %: report completion so the bar does not stay short.
+  if (totalConocido > 0) onProgress?.({ written: totalConocido, total: totalConocido })
+  return { ok: true }
 }
 
 /**
@@ -93,8 +191,31 @@ export async function sharePdf(url: string, fileName: string, options?: SharePdf
     return {
       ok: false,
       reason: 'auth',
-      message: 'Sesión expirada. Por favor, volvé a iniciar sesión.',
+      message: SESION_EXPIRADA,
     }
+  }
+
+  // Streamed download (progress / cancel): only when asked; the path below is the one every other caller uses.
+  if ((options?.onProgress || options?.signal) && (options.method ?? 'GET') === 'GET') {
+    const archivo = (FileSystem.cacheDirectory ?? '') + fileName
+    const descargado = await descargarConProgreso(url, archivo, options)
+    if (!descargado.ok) return descargado
+    if (options.signal?.aborted) {
+      FileSystem.deleteAsync(archivo, { idempotent: true }).catch(() => {})
+      return { ok: false, reason: 'cancelled', message: 'Descarga cancelada.' }
+    }
+    await options.onDownloaded?.()
+    if (options.signal?.aborted) {
+      FileSystem.deleteAsync(archivo, { idempotent: true }).catch(() => {})
+      return { ok: false, reason: 'cancelled', message: 'Descarga cancelada.' }
+    }
+    try {
+      await Sharing.shareAsync(archivo, tipoDeArchivo(fileName))
+    } catch {
+      return { ok: false, reason: 'unknown', message: 'No se pudo abrir el panel para compartir.' }
+    }
+    FileSystem.deleteAsync(archivo, { idempotent: true }).catch(() => {})
+    return { ok: true }
   }
 
   // 3. Download the file
@@ -112,7 +233,7 @@ export async function sharePdf(url: string, fileName: string, options?: SharePdf
   } catch (e) {
     // Renewal failed: the session is over (ApiError 401), not a connectivity problem.
     if (e instanceof ApiError && e.status === 401) {
-      return { ok: false, reason: 'auth', message: 'Sesión expirada. Por favor, volvé a iniciar sesión.' }
+      return { ok: false, reason: 'auth', message: SESION_EXPIRADA }
     }
     if (esTiempoAgotado(e)) {
       return { ok: false, reason: 'network', message: 'La descarga tardó demasiado. Probá de nuevo.' }
@@ -129,7 +250,7 @@ export async function sharePdf(url: string, fileName: string, options?: SharePdf
       return {
         ok: false,
         reason: 'auth',
-        message: 'Sesión expirada. Por favor, volvé a iniciar sesión.',
+        message: SESION_EXPIRADA,
       }
     }
     return {
