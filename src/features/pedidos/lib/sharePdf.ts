@@ -69,9 +69,11 @@ export interface SharePdfOptions {
   /**
    * Streamed download only: called once the file is fully downloaded (not aborted, not failed), right before the OS
    * share sheet opens. `shareAsync` only resolves when the user dismisses that sheet, so a caller that shows a
-   * blocking "generating" UI closes it here instead of waiting for `sharePdf` to return.
+   * blocking "generating" UI closes it here instead of waiting for `sharePdf` to return. It may return a promise:
+   * the share sheet opens only after it resolves, so a native modal can finish dismissing first (otherwise its last
+   * frame stays frozen behind the sheet). Aborting while it is pending cancels the share.
    */
-  onDownloaded?: () => void
+  onDownloaded?: () => void | Promise<void>
 }
 
 
@@ -202,7 +204,11 @@ export async function sharePdf(url: string, fileName: string, options?: SharePdf
       FileSystem.deleteAsync(archivo, { idempotent: true }).catch(() => {})
       return { ok: false, reason: 'cancelled', message: 'Descarga cancelada.' }
     }
-    options.onDownloaded?.()
+    await options.onDownloaded?.()
+    if (options.signal?.aborted) {
+      FileSystem.deleteAsync(archivo, { idempotent: true }).catch(() => {})
+      return { ok: false, reason: 'cancelled', message: 'Descarga cancelada.' }
+    }
     try {
       await Sharing.shareAsync(archivo, tipoDeArchivo(fileName))
     } catch {

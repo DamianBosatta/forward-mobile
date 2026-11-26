@@ -5,6 +5,7 @@ import { conTema, estilo } from '@/core/ui/fw/__testing__/tema'
 import { themeColors, radii } from '@/libs/theme'
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import { BotonCatalogoPdf } from '../components/BotonCatalogoPdf'
+import { MODAL_FADE_MS } from '../components/GenerandoCatalogoModal'
 import { novedadesDesde } from '../lib/presentacion'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 
@@ -328,6 +329,24 @@ describe('Modal bloqueante "Generando catálogo"', () => {
     })
     await generar()
     await waitFor(() => expect(screen.queryByText('Generando catálogo')).toBeNull())
+  })
+
+  it('the share sheet opens only after the modal is gone', async () => {
+    let modalAlAbrirElPanel: boolean | null = null
+    let esperado = 0
+    mockSharePdf.mockImplementation(async (_u: string, _n: string, o?: { onDownloaded?: () => void | Promise<void> }) => {
+      await new Promise((res) => setTimeout(res, 0)) // the real download takes time: the modal is committed by now
+      const desde = Date.now()
+      await o?.onDownloaded?.()
+      esperado = Date.now() - desde
+      modalAlAbrirElPanel = screen.queryByText('Generando catálogo') !== null
+      return new Promise(() => {})
+    })
+    await generar()
+    await waitFor(() => expect(modalAlAbrirElPanel).not.toBeNull())
+    expect(modalAlAbrirElPanel).toBe(false)
+    // The native fade-out needs time too: the committed state alone is not a dismissed window.
+    expect(esperado).toBeGreaterThanOrEqual(MODAL_FADE_MS - 20)
   })
 
   it('a share sheet failure after the download still shows the error', async () => {

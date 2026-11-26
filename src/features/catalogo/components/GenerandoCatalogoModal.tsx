@@ -61,6 +61,9 @@ function IconoQueLatE() {
   )
 }
 
+/** Fade-out of the native modal window (Android `animationType="fade"`): the window is still on screen this long after `visible` turns false. */
+export const MODAL_FADE_MS = 300
+
 /**
  * Blocks the whole app while the catalog PDF is built and downloaded. The Android back button does nothing:
  * only "Cancelar" closes it (if the server hangs, the user can leave without restarting the app).

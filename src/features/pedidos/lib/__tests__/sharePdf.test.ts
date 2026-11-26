@@ -315,9 +315,23 @@ describe('sharePdf — download with progress and cancel', () => {
       orden.push('share')
       return Promise.resolve()
     })
-    const r = await sharePdf('https://api.example.com/pdf', 'c.pdf', { onProgress: jest.fn(), onDownloaded: () => orden.push('downloaded') })
+    const r = await sharePdf('https://api.example.com/pdf', 'c.pdf', { onProgress: jest.fn(), onDownloaded: () => void orden.push('downloaded') })
     expect(r).toEqual({ ok: true })
     expect(orden).toEqual(['downloaded', 'share'])
+  })
+
+  it('the share sheet does not open until the promise returned by onDownloaded resolves', async () => {
+    descarga([{ status: 200 }])
+    let liberar: () => void = () => {}
+    const espera = new Promise<void>((res) => {
+      liberar = res
+    })
+    const r = sharePdf('https://api.example.com/pdf', 'c.pdf', { onProgress: jest.fn(), onDownloaded: () => espera })
+    await new Promise((res) => setTimeout(res, 20))
+    expect(mockShareAsync).not.toHaveBeenCalled()
+    liberar()
+    expect(await r).toEqual({ ok: true })
+    expect(mockShareAsync).toHaveBeenCalledTimes(1)
   })
 
   it('onDownloaded is not called when the download is cancelled or fails', async () => {
