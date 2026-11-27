@@ -150,75 +150,26 @@ describe('detalle de compra', () => {
     expect(screen.getByLabelText('Motivo').props.value).toBe('')
   })
 
-  describe('comprobante del proveedor', () => {
-    const SOCIO = { id: 'p1', razonSocial: 'Insumos del Sur SA', cuit: '30-71234567-1' }
+  describe('comprobante del proveedor (S9: solo web)', () => {
     const CARGADO = {
       id: 'k1', tipo: 'Factura', letra: 'A', puntoVenta: 2, numero: 55, fecha: '2026-10-01', periodoFiscal: 202610,
       cuitEmisor: '30712345671', razonSocialEmisor: 'Insumos del Sur SA', noGravado: 0, exento: 0, total: 1210,
       alicuotas: [{ alicuota: 'Veintiuno', netoGravado: 1000, iva: 210 }], tributos: [],
     }
-    const conSocio = (datos: Record<string, unknown>) => {
-      abrir(datos)
-      mockGet.mockImplementation((url: string) =>
-        Promise.resolve(url.startsWith('/api/v1/socios-comerciales/') ? SOCIO : compra(datos)))
-    }
 
-    it('al recibir se puede cargar el comprobante: va en el mismo POST, con el CUIT del proveedor precargado', async () => {
-      conSocio({ estado: 'Confirmado' })
+    it('al recibir no hay tarjeta de factura ni botones para cargar el comprobante o la foto', async () => {
+      abrir({ estado: 'Confirmado' })
       await userEvent.press(await screen.findByRole('button', { name: 'Recibir mercadería' }))
-      // La tarjeta "Factura del proveedor" abre la pantalla del comprobante (foto y datos).
-      await userEvent.press(screen.getByRole('button', { name: 'Cargar los datos de la factura' }))
-      await waitFor(() => expect(screen.getByLabelText('CUIT del proveedor').props.value).toBe('30-71234567-1'))
-      await userEvent.press(screen.getByRole('radio', { name: 'B' }))
-      fireEvent.changeText(screen.getByLabelText('Punto de venta'), '3')
-      fireEvent.changeText(screen.getByLabelText('Número'), '1234')
-      fireEvent.changeText(screen.getByLabelText('Fecha del comprobante'), '08/10/2026')
-      fireEvent.changeText(screen.getByLabelText('Total'), '55.200')
-      await userEvent.press(screen.getByRole('button', { name: 'Guardar comprobante' }))
-      expect(await screen.findByText('Factura B 00003-00001234')).toBeTruthy()
-      await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
-      expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', {
-        compraId: 'aaaa1111-0000', fechaFacturaProveedor: null, claveIdempotencia: expect.any(String),
-        comprobante: {
-          tipo: 'Factura', letra: 'B', puntoVenta: 3, numero: 1234, fecha: '2026-10-08', cuitEmisor: '30712345671',
-          razonSocialEmisor: 'Insumos del Sur SA', noGravado: 0, exento: 0, total: 55200, alicuotas: [], tributos: [],
-        },
-      })
+      await screen.findByRole('button', { name: 'Confirmar recepción' })
+      expect(screen.queryByRole('button', { name: 'Cargar los datos de la factura' })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Sacar foto de la factura' })).toBeNull()
     })
 
-    it('con el comprobante a medio cargar no se guarda: dice qué falta y no se recibe nada', async () => {
-      conSocio({ estado: 'Confirmado' })
-      await userEvent.press(await screen.findByRole('button', { name: 'Recibir mercadería' }))
-      await userEvent.press(screen.getByRole('button', { name: 'Cargar los datos de la factura' }))
-      await userEvent.press(screen.getByRole('button', { name: 'Guardar comprobante' }))
-      expect(await screen.findByText('Falta el punto de venta.')).toBeTruthy()
-      expect(mockPost).not.toHaveBeenCalled()
-    })
-
-    it('una recibida muestra su comprobante y se corrige con un PUT', async () => {
-      mockPut.mockResolvedValue(CARGADO)
-      conSocio({ estado: 'Entregado', conFactura: true, comprobante: CARGADO })
-      expect(await screen.findByText('Factura A 00002-00000055')).toBeTruthy()
-      await userEvent.press(screen.getByRole('button', { name: 'Corregir el comprobante' }))
-      expect(screen.getByLabelText('Neto gravado').props.value).toBe('1000')
-      fireEvent.changeText(screen.getByLabelText('Número'), '56')
-      await userEvent.press(screen.getByRole('button', { name: 'Guardar comprobante' }))
-      await waitFor(() => expect(mockPut).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/comprobante', expect.objectContaining({
-        letra: 'A', puntoVenta: 2, numero: 56, fecha: '2026-10-01', total: 1210,
-        alicuotas: [{ alicuota: 'Veintiuno', netoGravado: 1000, iva: 210 }],
-      })))
-    })
-
-    it('una recibida sin comprobante ofrece cargarlo; sin permiso de modificar, no', async () => {
-      conSocio({ estado: 'Entregado' })
-      expect(await screen.findByRole('button', { name: 'Cargar el comprobante' })).toBeTruthy()
-    })
-
-    it('sin permiso de modificar no se carga ni se corrige', async () => {
-      mockPermisos = []
-      conSocio({ estado: 'Entregado', conFactura: true, comprobante: CARGADO })
-      expect(await screen.findByText('Factura A 00002-00000055')).toBeTruthy()
-      expect(screen.queryByRole('button', { name: /comprobante/ })).toBeNull()
+    it('una recibida, con o sin comprobante, no lo muestra ni ofrece cargarlo o corregirlo', async () => {
+      abrir({ estado: 'Entregado', conFactura: true, comprobante: CARGADO })
+      await screen.findByText('Recibido')
+      expect(screen.queryByText('Factura A 00002-00000055')).toBeNull()
+      expect(screen.queryByRole('button', { name: /comprobante/i })).toBeNull()
     })
   })
 

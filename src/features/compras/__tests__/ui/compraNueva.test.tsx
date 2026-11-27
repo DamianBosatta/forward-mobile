@@ -229,7 +229,7 @@ describe('paso 4: recepción', () => {
     expect(screen.getByRole('switch', { name: 'Recibir ahora' })).toHaveProp('accessibilityState', expect.objectContaining({ checked: true }))
     expect(screen.getByRole('button', { name: 'Confirmar y recibir' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Confirmar compra' })).toBeNull()
-    expect(screen.getByText('Factura del proveedor')).toBeTruthy()
+    expect(screen.queryByText('Factura del proveedor')).toBeNull() // S9: sin plazo desde la factura no hay nada de factura
     await prender()
     expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeTruthy()
   })
@@ -302,21 +302,11 @@ describe('paso 4: recepción', () => {
     expect(screen.getByRole('button', { name: 'Confirmar y recibir' })).toBeDisabled()
   })
 
-  it('el comprobante cargado en el paso 4 se guarda después de recibir, con la misma API que el detalle', async () => {
+  it('S9: el paso 4 no ofrece cargar el comprobante ni la foto de la factura (solo web)', async () => {
     await hastaRecepcion()
     await prender()
-    await userEvent.press(screen.getByRole('button', { name: 'Cargar los datos de la factura' }))
-    expect(await screen.findByText('Comprobante del proveedor')).toBeTruthy()
-    fireEvent.changeText(screen.getByLabelText('CUIT del proveedor'), '20-12345678-6')
-    fireEvent.changeText(screen.getByLabelText('Punto de venta'), '4')
-    fireEvent.changeText(screen.getByLabelText('Número'), '12345')
-    fireEvent.changeText(screen.getByLabelText('Neto gravado'), '1000')
-    fireEvent.changeText(screen.getByLabelText('Total'), '1210')
-    await userEvent.press(screen.getByRole('button', { name: 'Guardar comprobante' }))
-    expect(await screen.findByText('Factura A 00004-00012345')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar y recibir' }))
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)/compras/guardada?id=c1&aviso=recibida'), ESPERA)
-    expect(mockPut).toHaveBeenCalledWith('/api/v1/Compras/c1/comprobante', expect.objectContaining({ letra: 'A', puntoVenta: 4, numero: 12345 }))
+    expect(screen.queryByRole('button', { name: 'Cargar los datos de la factura' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Sacar foto de la factura' })).toBeNull()
   })
 
   it('409 CompraYaRecibida no es un error: abre "Compra guardada" avisando que ya quedó recibida', async () => {

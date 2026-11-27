@@ -178,26 +178,13 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
           />
         ) : null}
         {vencimiento ? <Text style={secundario}>{`Vence el ${ddmmaaaa(vencimiento)}`}</Text> : null}
-        <View style={tarjeta}>
-          <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>Factura del proveedor</Text>
-          {comprobante ? <Text style={[typeScale.secundario, { color: c.text }]}>{resumenDeCargado(comprobante)}</Text> : null}
-          {comprobante?.fotoUrl ? <Text style={secundario}>Foto de la factura cargada</Text> : null}
-          <View style={{ flexDirection: 'row', gap: space[2] }}>
-            <View style={{ flex: 1 }}><Button label="Sacar foto" variant="secundario" accessibilityLabel="Sacar foto de la factura" disabled={ocupado} onPress={() => setComprobanteAbierto(true)} /></View>
-            <View style={{ flex: 1 }}><Button label={comprobante ? 'Cambiar datos' : 'Cargar datos'} variant="secundario" accessibilityLabel="Cargar los datos de la factura" disabled={ocupado} onPress={() => setComprobanteAbierto(true)} /></View>
-          </View>
-          <Text style={secundario}>Opcional. Se puede cargar después desde la compra.</Text>
-        </View>
+        {/* S9: el comprobante y la foto de la factura del proveedor se cargan en la web. */}
         {error ? <Notice tone="peligro">{error}</Notice> : null}
       </ScrollView>
       <PieFijo>
         <Text style={[secundario, { textAlign: 'center' }]}>{textoSuma(unidades)}</Text>
         <Button size="lg" label="Confirmar recepción" loading={ocupado} disabled={!!problema || plan.problema !== null} onPress={() => { void confirmar() }} />
       </PieFijo>
-      <ComprobanteProveedorPantalla visible={comprobanteAbierto}
-        form={comprobante?.form ?? (compra.comprobante ? formDesdeComprobante(compra.comprobante) : formNuevo(socio.data ?? { razonSocial: compra.razonSocialProveedor }, hoyTexto()))}
-        fotoUrl={comprobante?.fotoUrl ?? null}
-        onVolver={() => setComprobanteAbierto(false)} onGuardar={(cargado) => { setComprobante(cargado); setComprobanteAbierto(false) }} />
     </View>
   )
 }
