@@ -3,7 +3,8 @@ import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/
 import { AVISO_COBRO_DE_CLIENTE, Transferencia } from '../components/Transferencia'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA } from '@/core/ui/fw/MotivoDeshabilitado'
 import TesoreriaScreen from '../../../../app/(tabs)/tesoreria/index'
-import { api, ApiError } from '@/core/api/client'
+import { api, ApiError, leerError } from '@/core/api/client'
+import { esError } from '@/core/api/errores'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 
 const mockPush = jest.fn()
@@ -187,6 +188,22 @@ it('si el servidor rechaza, se ve su motivo', async () => {
   await userEvent.press(screen.getByRole('button', { name: 'Registrar transferencia' }))
 
   expect(await screen.findByText(/no coincide con la moneda/)).toBeTruthy()
+  expect(screen.queryByText('Movimiento registrado')).toBeNull()
+})
+
+it('con caja abierta en el depósito, se ve el mensaje del servidor y el código es el del catálogo', async () => {
+  const motivo = 'Cerrá la caja de Central antes de depositar; después podés abrirla de nuevo con lo que queda.'
+  const rechazo = leerError({ codigo: 'EfectivoConCajaAbierta', detail: motivo }, 400)
+  post.mockRejectedValue(rechazo)
+  renderConQuery(<Transferencia onListo={jest.fn()} />)
+  await userEvent.press(await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA))
+  await userEvent.press(radio('Desde', /^Caja de Emanuel/))
+  await userEvent.press(radio('Hacia', /^Banco Galicia/))
+  fireEvent.changeText(screen.getByLabelText('Monto'), '10')
+  await userEvent.press(screen.getByRole('button', { name: 'Registrar transferencia' }))
+
+  expect(await screen.findByText(motivo)).toBeTruthy()
+  expect(esError(rechazo, 'EfectivoConCajaAbierta')).toBe(true)
   expect(screen.queryByText('Movimiento registrado')).toBeNull()
 })
 
