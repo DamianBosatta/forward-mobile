@@ -6,7 +6,7 @@ import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { FilaInterruptor, FormContainer, IconoEnCuadro, Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { useActualizarPreferenciasAvisos, usePreferenciasAvisos, type PreferenciaAviso } from '@/libs/api-client/notificaciones'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
-import { GRUPOS_DE_AVISOS, avisoDeTipo, grupoDeTipo } from './avisos'
+import { GRUPOS_DE_AVISOS, avisoDeTipo, esAvisoFiscal, grupoDeTipo } from './avisos'
 
 const mensajeDe = (e: unknown, porDefecto: string) => (e instanceof Error && e.message ? e.message : porDefecto)
 
@@ -48,7 +48,7 @@ export function PreferenciasAvisos() {
 
   // Los temas salen de una tabla del cliente; dentro de cada uno queda el orden del servidor.
   const temas = [...GRUPOS_DE_AVISOS, 'Otros' as const]
-    .map((tema) => ({ tema, filas: (q.data ?? []).filter((p) => grupoDeTipo(p.tipo) === tema) }))
+    .map((tema) => ({ tema, filas: (q.data ?? []).filter((p) => !esAvisoFiscal(p.tipo) && grupoDeTipo(p.tipo) === tema) }))
     .filter((g) => g.filas.length > 0)
 
   return (

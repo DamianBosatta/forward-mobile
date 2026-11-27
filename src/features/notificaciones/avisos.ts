@@ -86,6 +86,12 @@ export function grupoDeTipo(tipo: string): GrupoDeAvisos | 'Otros' {
 }
 
 /**
+ * Facturación es solo de la web (S9): estos avisos no se muestran en mobile ni se ofrecen en las preferencias.
+ * Se deriva de la tabla de temas, así un tipo fiscal nuevo en ese tema queda oculto sin tocar otra lista.
+ */
+export const esAvisoFiscal = (tipo: string): boolean => grupoDeTipo(tipo) === 'Facturación y stock'
+
+/**
  * La tabla única `AccionDestino → ruta de la app`. El servidor dice ADÓNDE en términos del
  * negocio y cada cliente decide cómo llegar. `null` = mobile no tiene esa pantalla (o es una
  * ficha sin id): el aviso se muestra sin botón, nunca con una navegación rota.

@@ -22,6 +22,7 @@ const PREFERENCIAS = [
   { tipo: 'CajaSinCerrar', severidad: 'Critica', toast: true, silenciable: false },
   { tipo: 'VentaAutorizada', severidad: 'Info', toast: true, silenciable: true },
   { tipo: 'ResumenSemanal', severidad: 'Info', toast: false, silenciable: true },
+  { tipo: 'TalonarioRemitoPorVencer', severidad: 'Aviso', toast: true, silenciable: true },
 ]
 
 function pintar() {
@@ -43,6 +44,7 @@ describe('Preferencias de avisos', () => {
     expect(screen.getByRole('header', { name: 'Cobros y pagos' })).toBeTruthy()
     expect(screen.getByRole('header', { name: 'Calendario' })).toBeTruthy()
     expect(screen.queryByRole('header', { name: 'Facturación y stock' })).toBeNull()
+    expect(screen.queryByLabelText('CAI de remitos por vencer')).toBeNull()
     expect(screen.getByText('Salta en la web apenas llega')).toBeTruthy()
     expect(screen.getByText('Solo en la bandeja')).toBeTruthy()
   })

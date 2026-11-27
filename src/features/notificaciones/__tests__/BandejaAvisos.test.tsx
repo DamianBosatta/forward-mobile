@@ -29,6 +29,10 @@ const aviso = (o: Record<string, unknown>) => ({
   tipo: 'VentaAutorizada', severidad: 'Info', presentacion: 'Toast', leida: false, fechaCreacion: '2026-10-16T12:05:00Z', ...o,
 })
 const VENTA = aviso({ id: 'n1', titulo: 'Venta A00421 autorizada', mensaje: 'Ya podés prepararla.', accion: { destino: 'Venta', entidadId: 'v-9', etiqueta: 'Ver venta' } })
+const CHEQUE = aviso({
+  id: 'n3', tipo: 'ChequePorVencer', titulo: 'Un cheque vence el 20/10', mensaje: 'Revisalo.',
+  accion: { destino: 'Cheques', entidadId: null, etiqueta: 'Ver cheques' },
+})
 const TALONARIO = aviso({
   id: 'n2', tipo: 'TalonarioRemitoPorVencer', titulo: 'El CAI vence el 20/10', mensaje: 'Cargá un talonario nuevo.',
   accion: { destino: 'ConfiguracionFacturacion', entidadId: null, etiqueta: 'Cargar talonario' },
@@ -45,7 +49,7 @@ function pintar() {
 beforeEach(() => {
   jest.clearAllMocks()
   jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-16T18:00:00Z'))
-  mockGet.mockResolvedValue({ items: [VENTA, TALONARIO, LEIDO], noLeidas: 2, hayMas: false })
+  mockGet.mockResolvedValue({ items: [VENTA, TALONARIO, CHEQUE, LEIDO], noLeidas: 2, hayMas: false })
   mockPost.mockResolvedValue(1)
 })
 afterEach(() => jest.restoreAllMocks())
@@ -86,11 +90,18 @@ describe('Bandeja de avisos', () => {
 
   it('un aviso que se resuelve en la web lo dice y no navega', async () => {
     pintar()
-    const fila = await screen.findByLabelText('El CAI vence el 20/10, sin leer')
-    expect(within(fila).getByText('Cargar talonario: se abre desde la web')).toBeTruthy()
+    const fila = await screen.findByLabelText('Un cheque vence el 20/10, sin leer')
+    expect(within(fila).getByText('Ver cheques: se abre desde la web')).toBeTruthy()
     await userEvent.press(fila)
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Notificaciones/marcar-leidas', { ids: ['n2'] })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Notificaciones/marcar-leidas', { ids: ['n3'] })
     expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('S9: los avisos fiscales (talonarios, CAI, remitos sin factura) no se ven en mobile', async () => {
+    pintar()
+    await screen.findByText('Venta A00421 autorizada')
+    expect(screen.queryByLabelText('El CAI vence el 20/10, sin leer')).toBeNull()
+    expect(screen.queryByText('El CAI vence el 20/10')).toBeNull()
   })
 
   it('tocar un aviso ya leído no lo vuelve a marcar', async () => {
@@ -118,12 +129,12 @@ describe('Bandeja de avisos', () => {
   })
 
   it('"Ver avisos anteriores" sigue desde el último con el cursor del servidor', async () => {
-    mockGet.mockResolvedValueOnce({ items: [VENTA, TALONARIO], noLeidas: 2, hayMas: true })
+    mockGet.mockResolvedValueOnce({ items: [VENTA, CHEQUE], noLeidas: 2, hayMas: true })
     mockGet.mockResolvedValueOnce({ items: [LEIDO], noLeidas: 2, hayMas: false })
     pintar()
     await userEvent.press(await screen.findByText('Ver avisos anteriores'))
     expect(await screen.findByText('Tu semana')).toBeTruthy()
-    expect(urls()[1]).toBe('/api/v1/Notificaciones?SoloNoLeidas=false&Limite=30&AntesDe=2026-10-16T12%3A05%3A00Z&AntesDeId=n2')
+    expect(urls()[1]).toBe('/api/v1/Notificaciones?SoloNoLeidas=false&Limite=30&AntesDe=2026-10-16T12%3A05%3A00Z&AntesDeId=n3')
     expect(screen.queryByText('Ver avisos anteriores')).toBeNull()
   })
 

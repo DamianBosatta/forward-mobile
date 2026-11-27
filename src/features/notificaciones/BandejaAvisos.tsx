@@ -10,6 +10,7 @@ import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { useBandejaAvisos } from '@/libs/api-client/notificaciones'
 import { AvisoFila } from './AvisoFila'
 import { CalendarioAvisosTabs } from '@/core/ui/fw/CalendarioAvisosTabs'
+import { esAvisoFiscal } from './avisos'
 import { conEncabezadosDeDia, destinoDelAviso, horaDelAviso, type FilaDeBandeja } from './bandeja'
 import type { Aviso } from '@/libs/api-client/notificaciones'
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
@@ -45,7 +46,7 @@ export function BandejaAvisos() {
   const [soloNoLeidas, setSoloNoLeidas] = useState(false)
   const q = useBandejaAvisos(soloNoLeidas)
   const { abrir, marcar } = useAbrirAviso()
-  const avisos = q.data?.pages.flatMap((p) => p.items) ?? []
+  const avisos = (q.data?.pages.flatMap((p) => p.items) ?? []).filter((a) => !esAvisoFiscal(a.tipo))
   const noLeidas = q.data?.pages[0]?.noLeidas ?? 0
   const ahora = Date.now()
   const filas = conEncabezadosDeDia(avisos, ahora)
