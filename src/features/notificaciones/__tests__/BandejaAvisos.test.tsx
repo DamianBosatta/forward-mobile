@@ -49,7 +49,7 @@ function pintar() {
 beforeEach(() => {
   jest.clearAllMocks()
   jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-16T18:00:00Z'))
-  mockGet.mockResolvedValue({ items: [VENTA, TALONARIO, CHEQUE, LEIDO], noLeidas: 2, hayMas: false })
+  mockGet.mockResolvedValue({ items: [VENTA, TALONARIO, CHEQUE, LEIDO], noLeidas: 3, hayMas: false })
   mockPost.mockResolvedValue(1)
 })
 afterEach(() => jest.restoreAllMocks())

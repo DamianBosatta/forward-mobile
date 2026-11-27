@@ -255,7 +255,7 @@ describe('Línea con sus fragancias (lámina 2)', () => {
 describe('Detalle del producto (lámina 5) y movimientos (lámina 6)', () => {
   const abrirDetalle = async () => { await userEvent.press(screen.getByLabelText('Make Lavajean, disponible: 8, en alerta de stock')) }
 
-  it('muestra Stock Físico, Disponibilidad y Datos fiscales; sin costos, el aviso de gestión; nunca "Editar producto"', async () => {
+  it('muestra Stock Físico y Disponibilidad, sin Datos fiscales (solo web); sin costos, el aviso de gestión; nunca "Editar producto"', async () => {
     pintar()
     await abrir()
     await abrirDetalle()
@@ -265,9 +265,10 @@ describe('Detalle del producto (lámina 5) y movimientos (lámina 6)', () => {
     expect(within(hoja).getByLabelText('Disponible: 8')).toBeTruthy()
     expect(within(hoja).getByLabelText('Reservado: 6')).toBeTruthy()
     expect(within(hoja).getByLabelText('Por entrar: 48')).toBeTruthy()
-    expect(await within(hoja).findByLabelText('Alícuota de IVA: 21 %')).toBeTruthy()
-    expect(within(hoja).getByLabelText('Peso por unidad: 1,05 kg')).toBeTruthy()
-    expect(within(hoja).getByLabelText('Umbral propio de COT: Régimen general')).toBeTruthy()
+    // S9: los datos fiscales (alícuota, peso, umbral de COT) son solo de la web.
+    expect(within(hoja).queryByText('Datos fiscales')).toBeNull()
+    expect(within(hoja).queryByLabelText(/Alícuota de IVA/)).toBeNull()
+    expect(within(hoja).queryByLabelText(/Umbral propio de COT/)).toBeNull()
     expect(within(hoja).getByText('Información adicional disponible solo para roles de gestión.')).toBeTruthy()
     expect(within(hoja).queryByText('Rentabilidad')).toBeNull()
     expect(screen.queryByText(/Editar producto/)).toBeNull()

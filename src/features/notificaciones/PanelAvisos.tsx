@@ -4,7 +4,7 @@ import { space, typeScale, useColors } from '@/libs/theme'
 import { Notice } from '@/core/ui/fw'
 import { useBandejaAvisos } from '@/libs/api-client/notificaciones'
 import { AvisoFila } from './AvisoFila'
-import { esAvisoFiscal } from './avisos'
+import { esAvisoFiscal, fiscalesSinLeer } from './avisos'
 import { cuandoFue, destinoDelAviso } from './bandeja'
 import { useAbrirAviso } from './useAbrirAviso'
 
@@ -14,7 +14,8 @@ export function PanelAvisos() {
   const q = useBandejaAvisos(false)
   const { abrir, marcar } = useAbrirAviso()
   const avisos = (q.data?.pages[0]?.items ?? []).filter((a) => !esAvisoFiscal(a.tipo))
-  const noLeidas = q.data?.pages[0]?.noLeidas ?? 0
+  const pagina0 = q.data?.pages[0]
+  const noLeidas = pagina0 ? Math.max(0, pagina0.noLeidas - fiscalesSinLeer(pagina0)) : 0
   const ahora = Date.now()
   return (
     <View testID="panel-avisos" style={{ flex: 1, backgroundColor: c.bg }}>

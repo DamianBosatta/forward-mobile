@@ -38,11 +38,18 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks())
 
 describe('avisos sin leer', () => {
-  it('pide una sola fila de las no leídas y muestra el total del servidor', async () => {
+  it('pide una página de las no leídas y muestra el total del servidor', async () => {
     mockGet.mockResolvedValue({ items: [], noLeidas: 7, hayMas: true })
     pintar()
     expect(await screen.findByText('sin leer: 7')).toBeTruthy()
-    expect(mockGet).toHaveBeenCalledWith('/api/v1/Notificaciones?SoloNoLeidas=true&Limite=1')
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/Notificaciones?SoloNoLeidas=true&Limite=30')
+  })
+
+  it('S9: el número no cuenta los avisos fiscales sin leer', async () => {
+    const av = (id: string, tipo: string, leida = false) => ({ id, tipo, leida })
+    mockGet.mockResolvedValue({ items: [av('a', 'VentaAutorizada'), av('b', 'TalonarioRemitoPorVencer'), av('c', 'RemitosSinFacturaAlCierre'), av('d', 'FiscalSuperaStockReal', true)], noLeidas: 3, hayMas: false })
+    pintar()
+    expect(await screen.findByText('sin leer: 1')).toBeTruthy()
   })
 
   it('al volver la app al frente vuelve a preguntar', async () => {

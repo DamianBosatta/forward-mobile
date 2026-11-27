@@ -136,7 +136,7 @@ export function DetalleDeStock({ item, onCerrar, veCostos }: Props) {
           </Caja>
         </View>
 
-        <DatosFiscales productoId={item.productoId} />
+        {/* S9: alícuota, peso y umbral de COT son datos fiscales: se ven en la web. <DatosFiscales /> queda sin montar. */}
 
         {veCostos ? (
           <Rentabilidad item={item} />
