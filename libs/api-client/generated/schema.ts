@@ -26170,6 +26170,7 @@ export interface components {
         HojaRutaDetalleDto: {
             /** Format: uuid */
             id: string;
+            readonly codigo: string;
             /** Format: uuid */
             choferId: string;
             choferNombre: string;
@@ -26195,6 +26196,7 @@ export interface components {
         HojaRutaListItemDto: {
             /** Format: uuid */
             id: string;
+            readonly codigo: string;
             choferNombre: string;
             vehiculoPatente: string;
             /** Format: int32 */
@@ -30111,6 +30113,7 @@ export interface components {
         UltimoViajeDto: {
             /** Format: uuid */
             id: string;
+            readonly codigo: string;
             /** Format: date-time */
             fechaSalida: string;
             /** Format: int32 */

@@ -24,8 +24,8 @@ jest.mock('expo-router', () => ({
 }))
 jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 
-const HOJA = (id: string, chofer: string, patente: string, paradas: number, estado = 2) =>
-  ({ id, choferNombre: chofer, vehiculoPatente: patente, estado, fechaSalida: '2026-10-30T11:00:00Z', cantidadParadas: paradas, distanciaTotalMetros: 0, rutaCalculada: false })
+const HOJA = (id: string, chofer: string, patente: string, paradas: number, estado = 2, codigo = 'HR-0142') =>
+  ({ id, codigo, choferNombre: chofer, vehiculoPatente: patente, estado, fechaSalida: '2026-10-30T11:00:00Z', cantidadParadas: paradas, distanciaTotalMetros: 0, rutaCalculada: false })
 
 const pintar = () => render(<QueryClientProvider client={crearQueryClient({ retry: false })}><HojasDeRutaScreen /></QueryClientProvider>)
 
@@ -52,7 +52,7 @@ describe('Hojas de ruta de la empresa: filas y bloque', () => {
 
 describe('Hojas de ruta de la empresa', () => {
   it('lista chofer, vehículo, entregas y estado de cada hoja', async () => {
-    mockGet.mockResolvedValue([HOJA('aaaaaaaa-1111', 'Juan Pérez', 'AB123CD', 4), HOJA('bbbbbbbb-2222', 'Ana Gómez', 'XY987ZT', 1)])
+    mockGet.mockResolvedValue([HOJA('aaaaaaaa-1111', 'Juan Pérez', 'AB123CD', 4), HOJA('bbbbbbbb-2222', 'Ana Gómez', 'XY987ZT', 1, 2, 'HR-0143')])
     pintar()
     expect(await screen.findByText('Juan Pérez')).toBeTruthy()
     expect(screen.getByText('Vehículo AB123CD')).toBeTruthy()
@@ -60,7 +60,7 @@ describe('Hojas de ruta de la empresa', () => {
     expect(screen.getByText('entregas')).toBeTruthy()
     expect(screen.getByText('1')).toBeTruthy()
     expect(screen.getByText('entrega')).toBeTruthy()
-    expect(screen.getByText(`Hoja #AAAAAAAA · ${fechaCorta('2026-10-30T11:00:00Z')}`)).toBeTruthy()
+    expect(screen.getByText(`HR-0142 · ${fechaCorta('2026-10-30T11:00:00Z')}`)).toBeTruthy()
     expect(screen.getAllByLabelText('Estado: En curso')).toHaveLength(2)
   })
 
@@ -88,7 +88,7 @@ describe('Hojas de ruta de la empresa', () => {
   it('tocar una hoja abre la consola con ese id', async () => {
     mockGet.mockResolvedValue([HOJA('aaaaaaaa-1111', 'Juan Pérez', 'AB123CD', 4)])
     pintar()
-    await userEvent.press(await screen.findByRole('button', { name: /Hoja #AAAAAAAA/ }))
+    await userEvent.press(await screen.findByRole('button', { name: /Hoja HR-0142/ }))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/logistica/consola', params: { id: 'aaaaaaaa-1111' } })
   })
 })
@@ -101,16 +101,16 @@ describe.each(['light', 'dark'] as const)('Hojas de ruta: receta FWD (%s)', (mod
   it('cada fila es su tarjeta, sin bordes, con el bloque de entregas lime', async () => {
     mockGet.mockResolvedValue([HOJA('aaaaaaaa-1111', 'Juan Pérez', 'AB123CD', 4)])
     pintar()
-    const fila = estiloDe(await screen.findByRole('button', { name: /Hoja #AAAAAAAA/ }))
+    const fila = estiloDe(await screen.findByRole('button', { name: /Hoja HR-0142/ }))
     expect(fila).toMatchObject({ borderRadius: 22, backgroundColor: themeColors[modo].surface })
     expect(fila.borderBottomWidth ?? 0).toBe(0)
     expect(estiloDe(screen.getByTestId('bloque-entregas')).backgroundColor).toBe(themeColors[modo].lime)
   })
 
   it('una hoja finalizada va en teal, con bloque tinta y texto lime, y el estado escrito', async () => {
-    mockGet.mockResolvedValue([HOJA('cccccccc-3333', 'Ramiro Benítez', 'AB123CD', 8, 3)])
+    mockGet.mockResolvedValue([HOJA('cccccccc-3333', 'Ramiro Benítez', 'AB123CD', 8, 3, 'HR-0150')])
     pintar()
-    const fila = estiloDe(await screen.findByRole('button', { name: /Hoja #CCCCCCCC/ }))
+    const fila = estiloDe(await screen.findByRole('button', { name: /Hoja HR-0150/ }))
     expect(fila.backgroundColor).toBe(themeColors[modo].teal)
     expect(estiloDe(screen.getByTestId('bloque-entregas')).backgroundColor).toBe(themeColors[modo].ink)
     expect(estiloDe(screen.getByText('8') as never).color).toBe(themeColors[modo].lime)
