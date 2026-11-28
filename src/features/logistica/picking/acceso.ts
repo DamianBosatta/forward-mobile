@@ -6,7 +6,6 @@ import type { AppCapability } from '@/features/auth/lib/capabilities'
  * Con cualquiera de las dos alcanza (OR). El súper-admin las recibe en su lista de permisos.
  */
 export const CAPACIDADES_DEL_TABLERO: readonly AppCapability[] = [
-  // CAP_OPERAR_DEPOSITO todavía no está en la unión AppCapability (capabilities.ts, fuera de este cambio).
-  'CAP_OPERAR_DEPOSITO' as AppCapability,
+  'CAP_OPERAR_DEPOSITO',
   'CAP_ARMAR_VIAJES',
 ]
