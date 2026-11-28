@@ -1,6 +1,6 @@
 import { AppState } from 'react-native'
 jest.mock('@/core/utils/logger', () => ({ logger: { warn: jest.fn(), info: jest.fn(), error: jest.fn() } }))
-import { crearGestorStock as crearGestorReal, type ConexionStock, type MensajeStock } from '../stockEnVivo'
+import { crearGestorStock as crearGestorReal, politicaReintento, type ConexionStock, type MensajeStock } from '../stockEnVivo'
 
 // Ningún test deja oyentes suscritos: si quedara uno, el reintento de apertura (setTimeout real)
 // sobreviviría a la suite y dispararía tras el teardown de Jest.
@@ -291,7 +291,7 @@ describe('reintento de la apertura por red o 5xx (RED-R4-01 residual)', () => {
     await jest.advanceTimersByTimeAsync(10 * 60_000)
     const antes = c.start.mock.calls.length
     await jest.advanceTimersByTimeAsync(60_000)
-    expect(c.start.mock.calls.length - antes).toBe(1)
+    expect(c.start.mock.calls.length - antes).toBe(2) // tope de 30 s
   })
 
   it('cuando nadie escucha deja de reintentar', async () => {
@@ -395,5 +395,85 @@ describe('estado de la conexión (Conectando / En vivo / Sin conexión)', () => 
     const tarde = conexionOyente()
     g.suscribir(['d1'], tarde)
     expect(tarde.alConexion).toHaveBeenCalledWith('enVivo')
+  })
+})
+
+describe('F303: la conexión no se rinde mientras la app esté en primer plano', () => {
+  beforeEach(() => { jest.useFakeTimers() })
+  afterEach(() => { jest.useRealTimers() })
+
+  it('la política de reconexión nunca devuelve null y tiene tope de 30 s', () => {
+    const esperas = [0, 1, 2, 3, 4, 5, 10, 100, 10_000].map((n) => politicaReintento.nextRetryDelayInMilliseconds({ previousRetryCount: n }))
+    expect(esperas.slice(0, 5)).toEqual([0, 2_000, 5_000, 10_000, 30_000])
+    esperas.forEach((e) => { expect(e).not.toBeNull(); expect(e).toBeLessThanOrEqual(30_000) })
+    expect(esperas.slice(4).every((e) => e === 30_000)).toBe(true)
+  })
+
+  it('al cerrarse la conexión reabre sola', async () => {
+    const { c, h } = conexionFalsa()
+    const g = crearGestorStock(() => c, () => () => undefined)
+    g.suscribir(['d1'], oyente())
+    await jest.advanceTimersByTimeAsync(0)
+    expect(c.start).toHaveBeenCalledTimes(1)
+    h.cerrada!()
+    await jest.advanceTimersByTimeAsync(1_999)
+    expect(c.start).toHaveBeenCalledTimes(1)
+    await jest.advanceTimersByTimeAsync(1)
+    expect(c.start).toHaveBeenCalledTimes(2)
+    expect(g.enVivo()).toBe(true)
+  })
+
+  it('si la reapertura falla sigue reintentando cada 30 s como mucho', async () => {
+    const { c, h } = conexionFalsa()
+    const g = crearGestorStock(() => c, () => () => undefined)
+    g.suscribir(['d1'], oyente())
+    await jest.advanceTimersByTimeAsync(0)
+    c.start.mockRejectedValue(new Error('Network'))
+    h.cerrada!()
+    await jest.advanceTimersByTimeAsync(10 * 60_000)
+    const antes = c.start.mock.calls.length
+    await jest.advanceTimersByTimeAsync(60_000)
+    expect(c.start.mock.calls.length - antes).toBe(2)
+  })
+
+  it('pasar a segundo plano cancela la reapertura pendiente', async () => {
+    const { c, h } = conexionFalsa()
+    const g = crearGestorStock(() => c, () => () => undefined)
+    g.suscribir(['d1'], oyente())
+    await jest.advanceTimersByTimeAsync(0)
+    h.cerrada!()
+    cambioDeEstado('background')
+    await jest.advanceTimersByTimeAsync(10 * 60_000)
+    expect(c.start).toHaveBeenCalledTimes(1)
+  })
+
+  it('al irse el último oyente (cierre de sesión) cancela la reapertura pendiente', async () => {
+    const { c, h } = conexionFalsa()
+    const g = crearGestorStock(() => c, () => () => undefined)
+    const baja = g.suscribir(['d1'], oyente())
+    await jest.advanceTimersByTimeAsync(0)
+    h.cerrada!()
+    baja()
+    await jest.advanceTimersByTimeAsync(10 * 60_000)
+    expect(c.start).toHaveBeenCalledTimes(1)
+  })
+
+  it('no abre una segunda conexión mientras hay una apertura en vuelo', async () => {
+    const { c, h } = conexionFalsa()
+    const g = crearGestorStock(() => c, () => () => undefined)
+    g.suscribir(['d1'], oyente())
+    await jest.advanceTimersByTimeAsync(0)
+    let terminar!: () => void
+    c.start.mockImplementationOnce(() => new Promise<void>((r) => { terminar = r }))
+    h.cerrada!()
+    await jest.advanceTimersByTimeAsync(2_000)
+    expect(c.start).toHaveBeenCalledTimes(2)
+    g.reintentar()
+    h.cerrada!() // el cierre de una ronda vieja no cuenta
+    await jest.advanceTimersByTimeAsync(60_000)
+    expect(c.start).toHaveBeenCalledTimes(2)
+    terminar()
+    await jest.advanceTimersByTimeAsync(0)
+    expect(g.enVivo()).toBe(true)
   })
 })
