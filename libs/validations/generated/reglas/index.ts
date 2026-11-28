@@ -71,9 +71,29 @@ export const MonedaDeCompraSchema = z
   .string()
   .refine((m): boolean => m === 'ARS', 'La compra se carga en pesos (ARS).')
 
-/** pago/monto-dos-decimales: la base guarda numeric(18,2); lo mismo que `Money.CabeEnLaEscala`. */
+/** La base guarda numeric(18,2): lo mismo que `Money.PrecisionPersistida` y `EscalaPersistida` del backend. */
+const PRECISION_DE_DINERO = 18
+const ESCALA_DE_DINERO = 2
+/** Dígitos enteros que admite la columna (16): `Money.DigitosEnterosPersistidos`. */
+export const DIGITOS_ENTEROS_DE_DINERO = PRECISION_DE_DINERO - ESCALA_DE_DINERO
+
+/**
+ * pago/monto-dos-decimales: lo mismo que `Money.CabeEnLaEscala`. El mensaje del primer incumplimiento
+ * (decimales o, si no, dígitos enteros), o `null` si el monto entra en numeric(18,2). Un `number`
+ * no representa 9999999999999999,99 (es 1e16): el techo es `abs(n) < 10^16`.
+ */
+const mensajeDeEscala = (valor: number, nombre: string): string | null => {
+  if (!tieneComoMuchoDosDecimales(valor)) return `${nombre} admite hasta ${ESCALA_DE_DINERO} decimales`
+  if (Math.abs(valor) >= 10 ** DIGITOS_ENTEROS_DE_DINERO)
+    return `${nombre} admite hasta ${DIGITOS_ENTEROS_DE_DINERO} dígitos enteros`
+  return null
+}
+
 export const conEscalaDeDinero = (esquema: z.ZodNumber, campo = 'El monto') =>
-  esquema.refine(tieneComoMuchoDosDecimales, { message: `${campo} admite hasta 2 decimales` })
+  esquema.superRefine((valor, ctx) => {
+    const mensaje = mensajeDeEscala(valor, campo)
+    if (mensaje) ctx.addIssue({ code: z.ZodIssueCode.custom, message: mensaje })
+  })
 
 const exigirMoneda = (valor: unknown, ctx: z.RefinementCtx) => {
   const moneda = MonedaPermitidaSchema.safeParse(valor)
@@ -86,12 +106,8 @@ const exigirMoneda = (valor: unknown, ctx: z.RefinementCtx) => {
 }
 
 const escalaDe = (campo: string, valor: unknown, ctx: z.RefinementCtx, nombre: string) => {
-  if (typeof valor === 'number' && !tieneComoMuchoDosDecimales(valor))
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: [campo],
-      message: `${nombre} admite hasta 2 decimales`,
-    })
+  const mensaje = typeof valor === 'number' ? mensajeDeEscala(valor, nombre) : null
+  if (mensaje) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [campo], message: mensaje })
 }
 
 /** caja/abrir-moneda-ars-usd */
