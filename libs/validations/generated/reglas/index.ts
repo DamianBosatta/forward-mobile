@@ -83,7 +83,8 @@ export const DIGITOS_ENTEROS_DE_DINERO = PRECISION_DE_DINERO - ESCALA_DE_DINERO
  * no representa 9999999999999999,99 (es 1e16): el techo es `abs(n) < 10^16`.
  */
 const mensajeDeEscala = (valor: number, nombre: string): string | null => {
-  if (!tieneComoMuchoDosDecimales(valor)) return `${nombre} admite hasta ${ESCALA_DE_DINERO} decimales`
+  if (!tieneComoMuchoDosDecimales(valor))
+    return `${nombre} admite hasta ${ESCALA_DE_DINERO} decimales`
   if (Math.abs(valor) >= 10 ** DIGITOS_ENTEROS_DE_DINERO)
     return `${nombre} admite hasta ${DIGITOS_ENTEROS_DE_DINERO} dígitos enteros`
   return null
