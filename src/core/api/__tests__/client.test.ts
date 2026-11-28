@@ -1,4 +1,4 @@
-import { api, ApiError, configureApiClient } from '@/core/api/client'
+import { api, ApiError, configureApiClient, tokenFresco } from '@/core/api/client'
 
 jest.mock('@/core/query/persistConfig', () => ({ mmkvPersister: { removeClient: jest.fn() } }))
 const mockLogError = jest.fn()
@@ -214,5 +214,74 @@ describe('plazo por request', () => {
     const enCurso = fallo(api.get('/api/v1/Lento', { signal: pantalla.signal }))
     await jest.advanceTimersByTimeAsync(0)
     expect(await enCurso).toMatchObject({ name: 'AbortError' })
+  })
+})
+
+// ── tokenFresco: el hub de stock pide un token vigente en cada (re)conexión ──
+describe('tokenFresco (token vigente para el hub de stock)', () => {
+  const jwtConExp = (expSeg: number) => {
+    const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url')
+    return `${b64({ alg: 'none' })}.${b64({ exp: expSeg })}.firma`
+  }
+  const ahoraSeg = () => Math.floor(Date.now() / 1000)
+  const refrescos = () => mockFetch.mock.calls.filter(([u]) => String(u).endsWith('/connect/token'))
+  const configurar = (inicial: string, rt: string | null = 'r1') => {
+    const estado = { token: inicial }
+    configureApiClient({
+      getToken: () => estado.token, getRefreshToken: () => rt,
+      onTokensRefreshed: (t) => { estado.token = t.accessToken }, onUnauthorized: jest.fn(),
+    })
+    return estado
+  }
+  const refreshOk = (nuevo: string) => mockFetch.mockImplementation(async () => {
+    await Promise.resolve()
+    return { ok: true, status: 200, json: () => Promise.resolve({ access_token: nuevo, refresh_token: 'r2' }) }
+  })
+
+  it('con el token vencido o a punto de vencer renueva una vez y devuelve el nuevo', async () => {
+    const nuevo = jwtConExp(ahoraSeg() + 3600)
+    configurar(jwtConExp(ahoraSeg() + 30))
+    refreshOk(nuevo)
+    expect(await tokenFresco()).toBe(nuevo)
+    expect(refrescos()).toHaveLength(1)
+  })
+
+  it('con el token vigente no renueva y devuelve el actual', async () => {
+    const vigente = jwtConExp(ahoraSeg() + 3600)
+    configurar(vigente)
+    expect(await tokenFresco()).toBe(vigente)
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('si la renovación falla no rechaza: devuelve el token actual', async () => {
+    const vencido = jwtConExp(ahoraSeg() - 10)
+    configurar(vencido)
+    mockFetch.mockRejectedValue(new Error('sin red'))
+    await expect(tokenFresco()).resolves.toBe(vencido)
+  })
+
+  it('con un token ilegible o sin sesión no renueva ni rechaza', async () => {
+    configurar('no-es-un-jwt')
+    expect(await tokenFresco()).toBe('no-es-un-jwt')
+    configurar(null as unknown as string)
+    expect(await tokenFresco()).toBe('')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('el hub y un 401 de HTTP a la vez piden un solo refresh', async () => {
+    const nuevo = jwtConExp(ahoraSeg() + 3600)
+    const estado = configurar(jwtConExp(ahoraSeg() - 5))
+    mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+      if (url.endsWith('/connect/token')) {
+        await Promise.resolve()
+        return { ok: true, status: 200, json: () => Promise.resolve({ access_token: nuevo, refresh_token: 'r2' }) }
+      }
+      const ok = new Headers(init.headers).get('Authorization') === `Bearer ${nuevo}`
+      return { ok, status: ok ? 200 : 401, json: () => Promise.resolve(ok ? { succeeded: true, data: 'x' } : {}) }
+    })
+    const [t] = await Promise.all([tokenFresco(), api.get('/api/v1/A')])
+    expect(t).toBe(nuevo)
+    expect(estado.token).toBe(nuevo)
+    expect(refrescos()).toHaveLength(1)
   })
 })

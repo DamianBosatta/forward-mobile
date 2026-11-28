@@ -24,6 +24,8 @@ import { nombreDelDia, proximosDiasDeEntrega } from './dias'
 import { TiraDeDias } from './TiraDeDias'
 import { ColumnaTablero } from './ColumnaTablero'
 import { PestanasEstado } from './PestanasEstado'
+import { puedeAbrir } from '@/core/auth/reglasDeRuta'
+import { permisosDesde } from '@/features/auth/lib/permisos'
 import { DepositoDelTablero, ElegirDepositoSheet, ErrorTablero, SinAccesoPreparacion, TableroEsqueleto, TableroVacio } from './EstadosTablero'
 import { FiltrosTableroSheet, filtrosDeApertura, type FiltrosTablero } from './FiltrosTablero'
 
@@ -36,7 +38,8 @@ const AVISO_NO_ENTREGADO = 'Desde el teléfono solo se ven. Reprogramar o anular
  * cambia datos: solo GET a `ventas-para-preparacion` y `preparacion/conteos`, como la web.
  */
 export function PreparacionScreen() {
-  const puedeVer = useAuthStore((s) => s.canDo('MOD_VIAJES', 'read'))
+  // La regla de la ruta (reglasDeRuta): MOD_VIAJES más CAP_OPERAR_DEPOSITO o CAP_ARMAR_VIAJES; el chofer no abre el tablero (sin pedir datos).
+  const puedeVer = useAuthStore((s) => puedeAbrir(permisosDesde(s.user?.permissions), '/logistica/picking'))
   if (!puedeVer) {
     return (
       <Marco>

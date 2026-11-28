@@ -87,7 +87,7 @@ beforeEach(() => {
   pedidos = PEDIDOS
   mockAncho.mockReturnValue(390)
   jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
-  permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'MOD_VENTAS', canRead: true })
+  permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'CAP_OPERAR_DEPOSITO', canRead: true }, { module: 'MOD_VENTAS', canRead: true })
   servidor()
 })
 afterEach(() => { jest.restoreAllMocks() })
@@ -261,14 +261,14 @@ describe.each(['light', 'dark'] as const)('Preparación de pedidos (%s)', (esque
   })
 
   it('quien ve todos los depósitos arranca en el depósito de la sesión: sin elección, el suyo, y viaja como DepositoId (S8)', async () => {
-    permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true })
+    permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'CAP_OPERAR_DEPOSITO', canRead: true }, { module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true })
     pintar()
     expect(await screen.findByRole('button', { name: 'Depósito: Depósito Central' })).toBeTruthy()
     expect(ultimaLista()).toContain('DepositoId=d1')
   })
 
   it('con un depósito de la sesión elegido en Inicio, el tablero lo mira', async () => {
-    permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true })
+    permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'CAP_OPERAR_DEPOSITO', canRead: true }, { module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true })
     elegirDepositoDeSesion('u9', SESION)
     pintar()
     expect(await screen.findByRole('button', { name: 'Depósito: Zona Sur' })).toBeTruthy()
@@ -277,7 +277,7 @@ describe.each(['light', 'dark'] as const)('Preparación de pedidos (%s)', (esque
   })
 
   it('con "Todos" en la sesión ve "Todos los depósitos", sin candado', async () => {
-    permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true })
+    permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'CAP_OPERAR_DEPOSITO', canRead: true }, { module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true })
     elegirDepositoDeSesion('u9', null)
     pintar()
     expect(await screen.findByText('Todos los depósitos')).toBeTruthy()
@@ -372,8 +372,22 @@ describe.each(['light', 'dark'] as const)('Preparación de pedidos (%s)', (esque
     permisos({ module: 'MOD_VENTAS', canRead: true })
     pintar()
     expect(screen.getByText('No tenés acceso a Preparación de pedidos')).toBeTruthy()
-    expect(screen.getByText('Tu usuario no tiene el módulo de Viajes. Pedile a quien administra tu cuenta que te lo habilite.')).toBeTruthy()
+    expect(screen.getByText('Tu usuario no tiene permiso para operar el depósito ni armar viajes. Pedile a quien administra tu cuenta que te lo habilite.')).toBeTruthy()
     expect(mockGet).not.toHaveBeenCalled()
+  })
+
+  it('el chofer (solo Viajes) no abre el tablero y no pide pedidos ni conteos', () => {
+    permisos({ module: 'MOD_VIAJES', canRead: true })
+    pintar()
+    expect(screen.getByText('No tenés acceso a Preparación de pedidos')).toBeTruthy()
+    expect(mockGet).not.toHaveBeenCalled()
+  })
+
+  it('quien arma viajes (CAP_ARMAR_VIAJES) sí abre el tablero', async () => {
+    permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'CAP_ARMAR_VIAJES', canRead: true })
+    pintar()
+    await screen.findByTestId('tarjeta-v1')
+    expect(pedidosPedidos().length).toBeGreaterThan(0)
   })
 
   it('sin señal y sin nada guardado lo dice con Reintentar', async () => {

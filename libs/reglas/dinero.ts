@@ -1,7 +1,17 @@
-/** pago/monto-dos-decimales: la base guarda numeric(18,2); lo mismo que `Money.CabeEnLaEscala`. */
-export const tieneComoMuchoDosDecimales = (n: number): boolean =>
-  Math.abs(n * 100 - Math.round(n * 100)) < 1e-9
-
+/**
+ * pago/monto-dos-decimales: la base guarda numeric(18,2); lo mismo que `Money.CabeEnLaEscala`.
+ *
+ * `n * 100` mete un error de punto flotante que crece con la magnitud (150000.02 * 100 da
+ * 15000001.999999998), así que una tolerancia fija rechazaba montos reales. El error de `c` es a lo
+ * sumo `|c| * EPSILON` (la representación de `n` y el redondeo del producto, medio ulp cada uno);
+ * se acepta el doble de eso, con piso en 1e-9 (los montos chicos como `0.1 + 0.2`) y techo en 0,25
+ * para no aceptar centavos fraccionarios a magnitudes donde el double ya no los distingue.
+ */
+export const tieneComoMuchoDosDecimales = (n: number): boolean => {
+  const centavos = n * 100
+  const tolerancia = Math.min(Math.max(1e-9, Math.abs(centavos) * Number.EPSILON * 2), 0.25)
+  return Math.abs(centavos - Math.round(centavos)) <= tolerancia
+}
 /**
  * Redondeo a 2 decimales con desempate al par: el MISMO criterio que
  * `Math.Round(x, 2, MidpointRounding.ToEven)` del backend, que redondea ANTES de validar porque

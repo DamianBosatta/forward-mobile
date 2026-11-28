@@ -1,6 +1,6 @@
 import { AppState } from 'react-native'
 import { HttpTransportType, HubConnectionBuilder, LogLevel, type HubConnection } from '@microsoft/signalr'
-import { API_URL, alRenovarToken, tokenActual } from '@/core/api/client'
+import { API_URL, alRenovarToken, tokenFresco } from '@/core/api/client'
 import { logger } from '@/core/utils/logger'
 
 /**
@@ -56,7 +56,14 @@ export interface OyenteAvisos {
 const EVENTO = 'StockCambio'
 const EVENTO_ENTIDADES = 'EntidadCambio'
 const ESPERA_INICIAL_MS = 2_000
-const ESPERA_MAXIMA_MS = 60_000
+const ESPERA_MAXIMA_MS = 30_000
+const ESPERAS_RECONEXION_MS = [0, 2_000, 5_000, 10_000, 30_000]
+
+/** Reconexión automática de SignalR que no se rinde nunca (la de fábrica corta a los ~42 s): 0, 2, 5, 10 y 30 s, y de ahí cada 30 s. */
+export const politicaReintento = {
+  nextRetryDelayInMilliseconds: (ctx: { previousRetryCount: number }): number =>
+    ESPERAS_RECONEXION_MS[Math.min(ctx.previousRetryCount, ESPERAS_RECONEXION_MS.length - 1)],
+}
 
 /** Un 4xx que no se arregla esperando (403 sin permiso del hub, 404...): 401 (se renueva el token), 408 y 429 sí se reintentan. */
 function esRechazoPermanente(e: unknown): boolean {
@@ -64,11 +71,11 @@ function esRechazoPermanente(e: unknown): boolean {
   return typeof codigo === 'number' && codigo >= 400 && codigo < 500 && ![401, 408, 429].includes(codigo)
 }
 
-function conexionReal(): ConexionStock {
+export function conexionReal(): ConexionStock {
   return new HubConnectionBuilder()
-    // El token viaja en `accessTokenFactory` (query string solo en este hub), no en cookies.
-    .withUrl(`${API_URL}/hubs/stock`, { accessTokenFactory: () => tokenActual() ?? '', withCredentials: false })
-    .withAutomaticReconnect()
+    // El token viaja en `accessTokenFactory` (query string solo en este hub), no en cookies. Al reconectar tras vencer el JWT el servidor corta y renegocia: `tokenFresco` lo renueva antes.
+    .withUrl(`${API_URL}/hubs/stock`, { accessTokenFactory: () => tokenFresco(), withCredentials: false })
+    .withAutomaticReconnect(politicaReintento)
     .configureLogging(LogLevel.None)
     .build()
 }
@@ -147,7 +154,8 @@ export function crearGestorStock(
     c.on(EVENTO_ENTIDADES, (avisos: unknown) => { if (mia === ronda) oyentesAvisos.forEach((o) => o.alAvisos(avisos)) })
     c.onreconnecting(() => { if (mia === ronda) { cantidades = false; poner(false); ponerConexion('conectando') } })
     c.onreconnected(() => { if (mia === ronda) void conectado(c, mia) })
-    c.onclose(() => { if (mia === ronda) { conexion = null; poner(false); ponerConexion('sinConexion') } })
+    // Si la reconexión automática se rindió, se reabre con la misma espera creciente que una apertura fallida (soltar() la cancela).
+    c.onclose(() => { if (mia === ronda) { conexion = null; poner(false); ponerConexion('sinConexion'); reintentarLuego() } })
     try {
       await c.start()
       if (mia !== ronda) { void c.stop(); return }

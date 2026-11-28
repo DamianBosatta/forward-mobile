@@ -2,6 +2,8 @@ import type { CuerpoEntregaParada, MedioCobroChofer } from '@/libs/api-client/lo
 import type { components } from '@/libs/api-client/generated/schema'
 import { formatearNumero, leerNumero } from '@/core/utils/numero'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
+import { conEscalaDeDinero } from '@/libs/validations/generated/reglas'
+import { z } from 'zod'
 
 export interface LineaCobroForm {
   medio: MedioCobroChofer | null
@@ -68,6 +70,9 @@ export function armarLinea(l: LineaCobroForm, n: number): { linea: LineaCobro } 
   if (!l.medio) return { error: `Elegí el medio del cobro ${n}.` }
   const monto = montoDeLinea(l)
   if (monto == null || monto <= 0) return { error: `El monto del cobro ${n} tiene que ser mayor a cero.` }
+  // La misma regla de dinero que el servidor (numeric(18,2)): un 100,555 se frena acá y no entra en la cola offline.
+  const escala = conEscalaDeDinero(z.number(), `El monto del cobro ${n}`).safeParse(monto)
+  if (!escala.success) return { error: `${escala.error.issues[0].message}.` }
   const base = { medioPagoId: l.medio.id, monto, fotoUrl: l.fotoUrl ?? undefined }
   if (l.medio.tipo === 'Transferencia' && !l.fotoUrl) return { error: `Falta la foto del comprobante de la transferencia (cobro ${n}).` }
   // El cheque lo carga la oficina en la rendición: el chofer solo avisa con monto y foto (sin el arreglo `cheques`).

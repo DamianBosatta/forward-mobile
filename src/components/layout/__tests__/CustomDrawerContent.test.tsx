@@ -47,6 +47,8 @@ const conPermisos = (...pares: string[]) => mockCanDo.mockImplementation((m: str
 const comoAdmin = () => {
   mockCanDo.mockImplementation(() => true)
   mockRoles = ['Administrador', 'AdministradorSistemas', 'Gerencia', 'Empleado']
+  // El servidor le agrega el catálogo completo de capacidades al super-admin (capabilities.ts).
+  mockPermisos = [{ module: 'CAP_OPERAR_DEPOSITO', canRead: true }, { module: 'CAP_ARMAR_VIAJES', canRead: true }]
 }
 
 const SECCIONES = ['VENDER', 'COMPRAR', 'GESTIÓN']
@@ -307,17 +309,37 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     expect(screen.getByText('Tesorería')).toBeTruthy()
   })
 
-  it('Logística aparece con MOD_VIAJES (Picking y Consola) y desaparece entera sin él', async () => {
+  it('Logística desaparece entera sin MOD_VIAJES', () => {
+    mockPermisos = []
     conPermisos('MOD_CLIENTES:read')
-    const { unmount } = render(<CustomDrawerContent {...props()} />)
+    render(<CustomDrawerContent {...props()} />)
     expect(screen.queryByText('Logística')).toBeNull()
-    unmount()
+  })
 
+  it('el chofer (solo MOD_VIAJES) ve la Consola del chofer pero no Picking', async () => {
+    mockPermisos = []
+    conPermisos('MOD_VIAJES:read')
+    render(<CustomDrawerContent {...props()} />)
+    await abrirLogistica()
+    expect(screen.getByText('Consola del chofer')).toBeTruthy()
+    expect(screen.queryByText('Picking')).toBeNull()
+  })
+
+  it('quien opera el depósito (CAP_OPERAR_DEPOSITO) ve Picking', async () => {
+    mockPermisos = [{ module: 'CAP_OPERAR_DEPOSITO', canRead: true }]
     conPermisos('MOD_VIAJES:read')
     render(<CustomDrawerContent {...props()} />)
     await abrirLogistica()
     expect(screen.getByText('Picking')).toBeTruthy()
     expect(screen.getByText('Consola del chofer')).toBeTruthy()
+  })
+
+  it('quien arma viajes (CAP_ARMAR_VIAJES) ve Picking', async () => {
+    mockPermisos = [{ module: 'CAP_ARMAR_VIAJES', canRead: true }]
+    conPermisos('MOD_VIAJES:read')
+    render(<CustomDrawerContent {...props()} />)
+    await abrirLogistica()
+    expect(screen.getByText('Picking')).toBeTruthy()
   })
 
   it('Autorizaciones aparece solo con la capacidad de autorizar ventas, aunque lea ventas', async () => {

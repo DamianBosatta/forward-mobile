@@ -198,6 +198,38 @@ export async function attemptRefresh(): Promise<boolean> {
   return _refreshPromise
 }
 
+const MARGEN_VENCIMIENTO_MS = 60_000
+
+/** Cuándo vence un JWT (ms desde epoch), o null si no se puede leer. */
+function vencimientoDe(token: string): number | null {
+  try {
+    const carga = token.split('.')[1]
+    if (!carga || typeof atob !== 'function') return null
+    const base64 = carga.replace(/-/g, '+').replace(/_/g, '/')
+    const exp = (JSON.parse(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '='))) as { exp?: unknown }).exp
+    return typeof exp === 'number' ? exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Un token de acceso vigente para quien no pasa por una request HTTP (el hub de stock, en cada (re)conexión): si el actual
+ * venció o vence en menos de `margenMs`, lo renueva antes por `attemptRefresh` (mismo mutex que los 401). Nunca rechaza:
+ * si la renovación falla devuelve el actual y la política de reintento de quien llama sigue.
+ */
+export async function tokenFresco(margenMs: number = MARGEN_VENCIMIENTO_MS): Promise<string> {
+  const actual = _getToken() ?? ''
+  const vence = vencimientoDe(actual)
+  if (vence === null || vence - Date.now() > margenMs) return actual
+  try {
+    await attemptRefresh()
+  } catch (e) {
+    logger.warn('No se pudo renovar el token para el hub', e)
+  }
+  return _getToken() ?? actual
+}
+
 // ── Fetch con timeout ────────────────────────────────────────────────────────
 
 /** The one fetch with timeout: every request of the app (login and permissions included) goes through it. */
