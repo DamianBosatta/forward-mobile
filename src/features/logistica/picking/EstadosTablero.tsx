@@ -80,13 +80,13 @@ export function TableroVacio({ nombreDeposito, onVerTodo, onLimpiarFiltros }: { 
   )
 }
 
-/** Sin el módulo de Viajes (SinAccesoPreparacion): explica por qué y a quién pedirle el permiso. */
+/** Sin Viajes ni depósito/viajes (SinAccesoPreparacion): explica por qué y a quién pedirle el permiso. */
 export function SinAccesoPreparacion() {
   return (
     <Estado
       icono={Shield}
       titulo="No tenés acceso a Preparación de pedidos"
-      texto="Tu usuario no tiene el módulo de Viajes. Pedile a quien administra tu cuenta que te lo habilite."
+      texto="Tu usuario no tiene permiso para operar el depósito ni armar viajes. Pedile a quien administra tu cuenta que te lo habilite."
     />
   )
 }

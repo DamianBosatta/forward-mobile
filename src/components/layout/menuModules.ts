@@ -19,6 +19,7 @@ import {
 } from 'lucide-react-native'
 import type { AppModule } from '@/libs/api-client/types'
 import type { AppCapability } from '@/features/auth/lib/capabilities'
+import { CAPACIDADES_DEL_TABLERO } from '@/features/logistica/picking/acceso'
 
 type Accion = 'read' | 'create' | 'update' | 'delete'
 
@@ -36,6 +37,8 @@ export interface MenuItem {
   appAction?: Accion
   /** Capacidad otorgable que tiene que tener (p. ej. CAP_AUTORIZAR_VENTA). */
   capacidad?: AppCapability
+  /** Alcanza con una de estas capacidades (OR); se suma a las demás condiciones. */
+  algunaCapacidad?: readonly AppCapability[]
   /** Condición propia que se suma a las anteriores (p. ej. varios módulos o un corte por perfil). */
   visibleSi?: (canDo: Acceso['canDo']) => boolean
   /** Entradas que se despliegan en el lugar (Logística). La fila solo agrupa: no navega y desaparece sin hijos visibles. */
@@ -121,9 +124,9 @@ export const MENU: MenuGroup[] = [
         href: '/(tabs)/logistica/picking',
         routeName: 'logistica',
         hijos: [
-          // Solo ver (D6): GET /Logistica/ventas-para-preparacion pide MOD_VIAJES:Read y recorta por depósito (AlcanceDelDespacho);
+          // Solo ver (D6): GET /Logistica/ventas-para-preparacion pide MOD_VIAJES:Read más CAP_OPERAR_DEPOSITO o CAP_ARMAR_VIAJES (el chofer recibe 403) y recorta por depósito (AlcanceDelDespacho);
           // la web abre el tablero de picking con el mismo módulo (REGLAS_DE_RUTA). Es la ex "Preparación de pedidos" (S15).
-          { id: 'picking', label: 'Picking', icon: PackageOpen, href: '/(tabs)/logistica/picking', routeName: 'logistica/picking', appModule: 'MOD_VIAJES' },
+          { id: 'picking', label: 'Picking', icon: PackageOpen, href: '/(tabs)/logistica/picking', routeName: 'logistica/picking', appModule: 'MOD_VIAJES', algunaCapacidad: CAPACIDADES_DEL_TABLERO },
           { id: 'consola', label: 'Consola del chofer', icon: Navigation, href: '/(tabs)/logistica/consola', routeName: 'logistica/consola', appModule: 'MOD_VIAJES' },
         ],
       },
@@ -146,6 +149,7 @@ export function menuVisible(menu: MenuGroup[], { canDo, tieneCapacidad }: Acceso
   const puede = (it: MenuItem): boolean =>
     (!it.hijos || it.hijos.some(puede)) &&
     (!it.capacidad || tieneCapacidad(it.capacidad)) &&
+    (!it.algunaCapacidad || it.algunaCapacidad.some(tieneCapacidad)) &&
     (!it.appModule || canDo(it.appModule, it.appAction ?? 'read')) &&
     (!it.visibleSi || it.visibleSi(canDo))
   return menu
