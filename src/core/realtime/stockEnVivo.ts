@@ -1,6 +1,6 @@
 import { AppState } from 'react-native'
 import { HttpTransportType, HubConnectionBuilder, LogLevel, type HubConnection } from '@microsoft/signalr'
-import { API_URL, alRenovarToken, tokenActual } from '@/core/api/client'
+import { API_URL, alRenovarToken, tokenFresco } from '@/core/api/client'
 import { logger } from '@/core/utils/logger'
 
 /**
@@ -71,10 +71,10 @@ function esRechazoPermanente(e: unknown): boolean {
   return typeof codigo === 'number' && codigo >= 400 && codigo < 500 && ![401, 408, 429].includes(codigo)
 }
 
-function conexionReal(): ConexionStock {
+export function conexionReal(): ConexionStock {
   return new HubConnectionBuilder()
-    // El token viaja en `accessTokenFactory` (query string solo en este hub), no en cookies.
-    .withUrl(`${API_URL}/hubs/stock`, { accessTokenFactory: () => tokenActual() ?? '', withCredentials: false })
+    // El token viaja en `accessTokenFactory` (query string solo en este hub), no en cookies. Al reconectar tras vencer el JWT el servidor corta y renegocia: `tokenFresco` lo renueva antes.
+    .withUrl(`${API_URL}/hubs/stock`, { accessTokenFactory: () => tokenFresco(), withCredentials: false })
     .withAutomaticReconnect(politicaReintento)
     .configureLogging(LogLevel.None)
     .build()
