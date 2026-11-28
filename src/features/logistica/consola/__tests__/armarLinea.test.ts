@@ -13,6 +13,11 @@ describe('armarLinea: el monto entra en numeric(18,2) como en la API (QA F103)',
     expect(armarLinea(linea('100'), 1)).toMatchObject({ linea: { monto: 100 } })
   })
 
+  it('los montos reales con ruido de punto flotante arman la línea (150000,02 * 100 no es entero en binario)', () => {
+    expect(armarLinea(linea('150000,02'), 1)).toMatchObject({ linea: { monto: 150000.02 } })
+    expect(armarLinea(linea('131073,61'), 1)).toMatchObject({ linea: { monto: 131073.61 } })
+  })
+
   it('con más de 16 dígitos enteros no arma la línea', () => {
     expect(armarLinea(linea('10000000000000000'), 1)).toEqual({ error: 'El monto del cobro 1 admite hasta 16 dígitos enteros.' })
   })

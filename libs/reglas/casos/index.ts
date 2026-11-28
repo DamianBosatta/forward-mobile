@@ -29,6 +29,10 @@ export const CASOS: Readonly<Record<string, readonly Caso[]>> = {
     { nombre: 'punto flotante que sigue siendo centavos', entrada: [0.1 + 0.2], esperado: true },
     { nombre: 'tres decimales', entrada: [10.005], esperado: false },
     { nombre: 'milésima chica', entrada: [0.001], esperado: false },
+    { nombre: 'monto real 150000,02', entrada: [150000.02], esperado: true },
+    { nombre: 'monto real 131073,61', entrada: [131073.61], esperado: true },
+    { nombre: 'monto real 1234567,89', entrada: [1234567.89], esperado: true },
+    { nombre: 'tres decimales en millones', entrada: [1234567.891], esperado: false },
   ],
   redondearDosDecimales: [
     { nombre: 'baja lo que está por debajo de la mitad', entrada: [2.504], esperado: 2.5 },
