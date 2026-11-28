@@ -103,12 +103,11 @@ describe('recibir mercadería (M11)', () => {
     expect(screen.getByText('Suma 76 unidades al stock y genera la deuda con el proveedor')).toBeTruthy()
   })
 
-  it('líneas con la visual del carrito de venta: "Cuánto llegó de cada línea" y la tarjeta "Factura del proveedor"', async () => {
+  it('líneas con la visual del carrito de venta: "Cuánto llegó de cada línea" (sin captura de factura: solo web)"', async () => {
     await abrirRecepcion()
     expect(screen.getByText('Cuánto llegó de cada línea')).toBeTruthy()
-    expect(screen.getByText('Factura del proveedor')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Sacar foto de la factura' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Cargar los datos de la factura' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Sacar foto de la factura' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Cargar los datos de la factura' })).toBeNull()
     // Una línea vacía dice qué escribir debajo del producto y no deja confirmar.
     fireEvent.changeText(screen.getByLabelText('Llegó de Make Lavajean'), '')
     expect(screen.getByText('Escribí cuánto llegó (0 si no llegó nada).')).toBeTruthy()

@@ -74,6 +74,7 @@ export const CATALOGO_DE_ERRORES = {
   DocumentacionViajeNadaEmitido: { status: 409, mensaje: "No se emitió ningún remito ni ninguna factura." },
   DocumentacionViajeTalonarioNoEmite: { status: 409, mensaje: "No se emitió ningún remito ni ninguna factura: el talonario de remitos no puede emitir." },
   Duplicado: { status: 409, mensaje: "Ya existe un registro con datos duplicados." },
+  EfectivoConCajaAbierta: { status: 400, mensaje: "Cerrá la caja del depósito antes de depositar; después podés abrirla de nuevo con lo que queda." },
   EntregaNumeroGuiaRequerido: { status: 400, mensaje: "El número de guía es requerido: sin él no hay reclamo posible." },
   EntregaReceptorRequerido: { status: 400, mensaje: "El nombre del receptor es requerido." },
   ErrorDePersistencia: { status: 500, mensaje: "Error de persistencia de datos." },

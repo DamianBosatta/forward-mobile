@@ -23,7 +23,6 @@ const FILTROS = [
 /** Tono de la tabla de estados a chip de la lámina F4. */
 const CHIP_DE_TONO: Record<string, ChipEstado> = { pendiente: 'pendiente', enruta: 'enCurso', entregada: 'entregado', anulada: 'anulado' }
 
-const codigoDe = (id: string) => `Hoja #${id.substring(0, 8).toUpperCase()}`
 const entregas = (n: number) => `${n} ${n === 1 ? 'entrega' : 'entregas'}`
 
 /** Bloque de cantidad de la fila (receta .qty del FWD): lime con texto ink; en una hoja hecha, tinta con texto lime. */
@@ -49,14 +48,14 @@ const FilaDeHoja = memo(function FilaDeHoja({ hoja, indice, onAbrir }: { hoja: H
     <Entrada tipo="fila" indice={indice} style={{ marginBottom: space[2] }}>
       <PressableFx
         accessibilityRole="button"
-        accessibilityLabel={`${codigoDe(hoja.id)}, ${hoja.choferNombre}, ${hoja.vehiculoPatente}, ${entregas(hoja.cantidadParadas)}`}
+        accessibilityLabel={`Hoja ${hoja.codigo}, ${hoja.choferNombre}, ${hoja.vehiculoPatente}, ${entregas(hoja.cantidadParadas)}`}
         onPress={() => onAbrir(hoja.id)}
         android_ripple={{ color: c.surfaceAlt }}
         style={{ minHeight: 84, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3], paddingLeft: space[3], paddingRight: space[4], overflow: 'hidden', borderRadius: radii.fila, backgroundColor: hecha ? c.teal : c.surface }}
       >
         <BloqueEntregas cantidad={hoja.cantidadParadas} hecha={hecha} />
         <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-          <Text style={[typeScale.secundario, { color: apagado }]} numberOfLines={1}>{[codigoDe(hoja.id), fechaCorta(hoja.fechaSalida)].filter(Boolean).join(' · ')}</Text>
+          <Text style={[typeScale.secundario, { color: apagado }]} numberOfLines={1}>{[hoja.codigo, fechaCorta(hoja.fechaSalida)].filter(Boolean).join(' · ')}</Text>
           <Text style={[typeScale.cuerpoDestacado, { color: hecha ? c.ink : c.text }]} numberOfLines={1}>{hoja.choferNombre}</Text>
           <Text style={[typeScale.secundario, { color: apagado }]} numberOfLines={1}>{`Vehículo ${hoja.vehiculoPatente}`}</Text>
         </View>

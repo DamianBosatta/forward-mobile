@@ -83,7 +83,7 @@ describe('Compra guardada (frames 17 a 20)', () => {
     expect(screen.getByText('Compra confirmada. Compra recibida.')).toBeTruthy()
     expect(screen.getByText('Suma 256 unidades al stock y genera la deuda con el proveedor')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Recibir mercadería' })).toBeNull()
-    expect(screen.getByRole('button', { name: 'Cargar el comprobante del proveedor' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /comprobante del proveedor/ })).toBeNull() // S9: se carga en la web
   })
 
   it('por recibir: "Recibir mercadería" abre la recepción y, si llegó una parte, queda "Recibida con faltante" con la compra nueva', async () => {

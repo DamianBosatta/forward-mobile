@@ -252,14 +252,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         </View>
         {compra.descuentoPorcentaje ? <Text style={secundario}>{`Descuento general: ${mostrarNumero(compra.descuentoPorcentaje)} %`}</Text> : null}
         {compra.fechaVencimientoPago ? <Text style={secundario}>{`Vence el ${ddmmaaaa(compra.fechaVencimientoPago)}`}</Text> : null}
-        {compra.comprobante ? (
-          <Text style={secundario}>{resumenComprobante(compra.comprobante)}</Text>
-        ) : null}
-        {esEstadoCompra(estado, 'Entregado') && puedeEditar ? (
-          compra.comprobante && seCorrigeEnLaWeb(compra.comprobante)
-            ? <Text style={secundario}>Tiene varias alícuotas: se corrige en la web.</Text>
-            : <Button label={compra.comprobante ? 'Corregir el comprobante' : 'Cargar el comprobante'} variant="secundario" disabled={ocupado} onPress={() => abrirHoja('comprobante')} />
-        ) : null}
+        {/* S9: el comprobante y la foto de la factura del proveedor se cargan y se ven en la web. */}
         {compra.compraOrigenId ? (
           <Button label={`Salió de la compra ${numeroDeCompra({ id: compra.compraOrigenId, numero: compra.compraOrigenNumero })}`} variant="secundario"
             onPress={() => router.push(`/(tabs)/compras/${compra.compraOrigenId}` as never)} />
@@ -267,25 +260,6 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         {compra.compraFaltanteId ? (
           <Button label={`Lo que faltó pasó a la compra ${numeroDeCompra({ id: compra.compraFaltanteId, numero: compra.compraFaltanteNumero })}`} variant="secundario"
             onPress={() => router.push(`/(tabs)/compras/${compra.compraFaltanteId}` as never)} />
-        ) : null}
-        {compra.fotoFacturaProveedorUrl || puedeCambiarFoto ? (
-          <View style={{ gap: space[2], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
-            <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Factura del proveedor</Text>
-            {compra.fotoFacturaProveedorUrl ? (
-              <ExpoImage source={{ uri: compra.fotoFacturaProveedorUrl }} cachePolicy="memory-disk" accessibilityLabel="Foto de la factura del proveedor"
-                style={{ width: '100%', height: 220, borderRadius: radii.campo, backgroundColor: c.border }} contentFit="contain" />
-            ) : null}
-            {puedeCambiarFoto ? (
-              <>
-                <FotoDelCobro que="de la factura" url={compra.fotoFacturaProveedorUrl ?? null} subir={subirComprobanteCobro}
-                  onUrl={(u) => { void guardarFoto(u) }} onSubiendo={setSubiendoFoto} />
-                {compra.fotoFacturaProveedorUrl ? (
-                  <Button label="Quitar la foto de la factura" variant="secundario" disabled={ocupado} onPress={() => { void guardarFoto(null) }} />
-                ) : null}
-              </>
-            ) : null}
-            {errorFoto ? <Notice tone="peligro">{errorFoto}</Notice> : null}
-          </View>
         ) : null}
       </ScrollView>
       {hayBarra ? (
@@ -326,18 +300,6 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         {error ? <Notice tone="peligro">{error}</Notice> : null}
         <Button label="Anular recepción" variant="peligro" loading={anularRecepcion.isPending} disabled={!motivo.trim()}
           onPress={() => { void correr(() => anularRecepcion.mutateAsync({ id: compra.id, motivo: motivo.trim(), version: versionVista }), 'No se anuló la recepción') }} />
-      </BottomSheet>
-      <BottomSheet visible={hoja === 'comprobante'} onClose={cerrarHoja} accessibilityLabel="Comprobante del proveedor">
-        <Text style={[typeScale.titulo, { color: c.text }]}>Comprobante del proveedor</Text>
-        <Text style={secundario}>Como figura en el papel. Las percepciones y varias alícuotas se cargan en la web.</Text>
-        {comprobante ? (
-          <ScrollView style={{ maxHeight: 420 }} keyboardShouldPersistTaps="handled">
-            <ComprobanteCampos form={comprobante} onCambio={setComprobante} />
-          </ScrollView>
-        ) : null}
-        {error ? <Notice tone="peligro">{error}</Notice> : null}
-        <Button label="Guardar comprobante" loading={guardarComprobante.isPending}
-          onPress={() => conComprobante((c) => guardarComprobante.mutateAsync({ id: compra.id, comprobante: c! }), 'No se guardó el comprobante')} />
       </BottomSheet>
       <ConfirmarYRecibirSheet visible={hoja === 'confirmarYRecibir'} onClose={cerrarHoja} pideFactura={pideFactura}
         ocupado={recibiendo} fecha={fechaFactura} onFecha={setFechaFactura} error={hoja === 'confirmarYRecibir' ? error : null} onConfirmar={(f) => { void confirmarYRecibirAhora(f) }} />

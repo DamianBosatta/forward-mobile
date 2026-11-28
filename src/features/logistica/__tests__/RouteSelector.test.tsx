@@ -2,8 +2,8 @@ import React from 'react'
 import { render, screen } from '@testing-library/react-native'
 import { RouteSelector } from '../components/RouteSelector'
 
-const ruta = (id: string, cantidadParadas: number) =>
-  ({ id, estado: 1, fechaSalida: '2026-10-09T11:00:00Z', cantidadParadas }) as never
+const ruta = (id: string, cantidadParadas: number, codigo = 'HR-0001') =>
+  ({ id, codigo, estado: 1, fechaSalida: '2026-10-09T11:00:00Z', cantidadParadas }) as never
 
 describe('RouteSelector: cantidad de entregas por viaje', () => {
   it('rotula "entregas" en plural y "entrega" en singular, nunca "paradas"', () => {
@@ -11,6 +11,14 @@ describe('RouteSelector: cantidad de entregas por viaje', () => {
     expect(screen.getByText('3 entregas')).toBeTruthy()
     expect(screen.getByText('1 entrega')).toBeTruthy()
     expect(screen.queryByText(/parada/i)).toBeNull()
+  })
+})
+
+describe('RouteSelector: código del viaje', () => {
+  it('prints the server codigo and never builds one from the id', () => {
+    render(<RouteSelector routes={[ruta('aaaaaaaa-1', 3, 'HR-0142')]} onSelect={jest.fn()} />)
+    expect(screen.getByText('HR-0142')).toBeTruthy()
+    expect(screen.queryByText(/AAAAAAAA/)).toBeNull()
   })
 })
 

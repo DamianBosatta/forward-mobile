@@ -6213,6 +6213,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/configuracion/facturacion/cot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConfiguracionCotDtoResponse"];
+                        "application/json": components["schemas"]["ConfiguracionCotDtoResponse"];
+                        "text/json": components["schemas"]["ConfiguracionCotDtoResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ActualizarConfiguracionCotCommand"];
+                    "text/json": components["schemas"]["ActualizarConfiguracionCotCommand"];
+                    "application/*+json": components["schemas"]["ActualizarConfiguracionCotCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConfiguracionCotDtoResponse"];
+                        "application/json": components["schemas"]["ConfiguracionCotDtoResponse"];
+                        "text/json": components["schemas"]["ConfiguracionCotDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cuentas-corrientes/propias": {
         parameters: {
             query?: never;
@@ -22393,6 +22468,10 @@ export interface components {
             certificadoRuta?: string | null;
             habilitada?: boolean;
         };
+        ActualizarConfiguracionCotCommand: {
+            ambiente?: components["schemas"]["AmbienteCot"];
+            habilitado?: boolean;
+        };
         ActualizarListaPrecioCommand: {
             nombre?: string | null;
             /** Format: double */
@@ -22529,6 +22608,8 @@ export interface components {
         };
         /** @enum {string} */
         AmbienteArca: "Homologacion" | "Produccion";
+        /** @enum {string} */
+        AmbienteCot: "Prueba" | "Produccion";
         AnalizarImportacionCommand: {
             /** Format: uuid */
             importacionJobId?: string;
@@ -23280,6 +23361,8 @@ export interface components {
             /** Format: double */
             diferenciaVista: number;
             motivoDiferencia?: string | null;
+            /** Format: int32 */
+            pendientesVistos: number;
         };
         CerrarCajaResponseDto: {
             /** Format: uuid */
@@ -24199,6 +24282,21 @@ export interface components {
             data?: components["schemas"]["ConfiguracionArcaDto"];
             codigo?: string | null;
         };
+        ConfiguracionCotDto: {
+            configurada: boolean;
+            ambiente: components["schemas"]["AmbienteCot"];
+            habilitado: boolean;
+        };
+        ConfiguracionCotDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ConfiguracionCotDto"];
+            codigo?: string | null;
+        };
         ConfirmarCompraCommand: {
             claveIdempotencia?: string | null;
             /** Format: uuid */
@@ -24544,6 +24642,11 @@ export interface components {
             longitude?: number | null;
             /** Format: uuid */
             listaPrecioId?: string | null;
+            calle?: string | null;
+            numero?: string | null;
+            codigoPostal?: string | null;
+            localidad?: string | null;
+            provincia?: components["schemas"]["Provincia"];
         };
         CreateFraganciaCommand: {
             nombre?: string | null;
@@ -24593,6 +24696,8 @@ export interface components {
             pesoKg?: number | null;
             /** Format: double */
             cotUmbralPropioKg?: number | null;
+            codigoArba?: string | null;
+            unidadArba?: string | null;
             esCargaMasiva?: boolean;
         };
         CreateSocioCommand: {
@@ -24614,6 +24719,10 @@ export interface components {
             nombreFantasia?: string | null;
             nombreContacto?: string | null;
             localidad?: string | null;
+            calle?: string | null;
+            numero?: string | null;
+            codigoPostal?: string | null;
+            provincia?: components["schemas"]["Provincia"];
             horario?: components["schemas"]["FranjaHorariaDto"][] | null;
             condicionPago?: components["schemas"]["CondicionPagoDto"];
             franjaEntrega?: components["schemas"]["FranjaHorariaDto"][] | null;
@@ -24659,6 +24768,8 @@ export interface components {
             modelo?: string | null;
             /** Format: double */
             capacidadCargaKg?: number;
+            transportistaRazonSocial?: string | null;
+            transportistaCuit?: string | null;
         };
         CreateVentaBorradorCommand: {
             claveIdempotencia?: string | null;
@@ -24909,6 +25020,11 @@ export interface components {
             /** Format: uuid */
             listaPrecioId?: string | null;
             listaPrecioNombre?: string | null;
+            calle?: string | null;
+            numero?: string | null;
+            codigoPostal?: string | null;
+            localidad?: string | null;
+            provincia?: components["schemas"]["Provincia"];
         };
         DesactivarCuentaCorrienteCommand: {
             claveIdempotencia?: string | null;
@@ -26170,6 +26286,7 @@ export interface components {
         HojaRutaDetalleDto: {
             /** Format: uuid */
             id: string;
+            readonly codigo: string;
             /** Format: uuid */
             choferId: string;
             choferNombre: string;
@@ -26195,6 +26312,7 @@ export interface components {
         HojaRutaListItemDto: {
             /** Format: uuid */
             id: string;
+            readonly codigo: string;
             choferNombre: string;
             vehiculoPatente: string;
             /** Format: int32 */
@@ -27835,6 +27953,8 @@ export interface components {
             pesoKg?: number | null;
             /** Format: double */
             cotUmbralPropioKg?: number | null;
+            codigoArba?: string | null;
+            unidadArba?: string | null;
         };
         ProductoDto: {
             /** Format: uuid */
@@ -27862,6 +27982,8 @@ export interface components {
             pesoKg?: number | null;
             /** Format: double */
             cotUmbralPropioKg?: number | null;
+            codigoArba?: string | null;
+            unidadArba?: string | null;
             hayDisponible?: boolean | null;
             /** Format: int32 */
             cantidadFragancias?: number | null;
@@ -27962,6 +28084,8 @@ export interface components {
             data?: components["schemas"]["ProveedorRecienteDto"][] | null;
             codigo?: string | null;
         };
+        /** @enum {string} */
+        Provincia: "CiudadAutonomaDeBuenosAires" | "BuenosAires" | "Catamarca" | "Chaco" | "Chubut" | "Cordoba" | "Corrientes" | "EntreRios" | "Formosa" | "Jujuy" | "LaPampa" | "LaRioja" | "Mendoza" | "Misiones" | "Neuquen" | "RioNegro" | "Salta" | "SanJuan" | "SanLuis" | "SantaCruz" | "SantaFe" | "SantiagoDelEstero" | "TierraDelFuego" | "Tucuman";
         PuestoDetalleDto: {
             /** Format: uuid */
             id?: string;
@@ -29281,6 +29405,10 @@ export interface components {
             nombreFantasia?: string | null;
             nombreContacto?: string | null;
             localidad?: string | null;
+            calle?: string | null;
+            numero?: string | null;
+            codigoPostal?: string | null;
+            provincia?: components["schemas"]["Provincia"];
             displayName: string;
             horario?: components["schemas"]["FranjaHorariaDto"][] | null;
             condicionPago?: components["schemas"]["CondicionPagoDto"];
@@ -30111,6 +30239,7 @@ export interface components {
         UltimoViajeDto: {
             /** Format: uuid */
             id: string;
+            readonly codigo: string;
             /** Format: date-time */
             fechaSalida: string;
             /** Format: int32 */
@@ -30223,6 +30352,11 @@ export interface components {
             longitude?: number | null;
             /** Format: uuid */
             listaPrecioId?: string | null;
+            calle?: string | null;
+            numero?: string | null;
+            codigoPostal?: string | null;
+            localidad?: string | null;
+            provincia?: components["schemas"]["Provincia"];
         };
         UpdateDiasEntregaCommand: {
             lunes?: boolean;
@@ -30333,6 +30467,8 @@ export interface components {
             pesoKg?: number | null;
             /** Format: double */
             cotUmbralPropioKg?: number | null;
+            codigoArba?: string | null;
+            unidadArba?: string | null;
             esCargaMasiva?: boolean;
         };
         UpdateSocioCommand: {
@@ -30354,6 +30490,10 @@ export interface components {
             nombreFantasia?: string | null;
             nombreContacto?: string | null;
             localidad?: string | null;
+            calle?: string | null;
+            numero?: string | null;
+            codigoPostal?: string | null;
+            provincia?: components["schemas"]["Provincia"];
             horario?: components["schemas"]["FranjaHorariaDto"][] | null;
             condicionPago?: components["schemas"]["CondicionPagoDto"];
             franjaEntrega?: components["schemas"]["FranjaHorariaDto"][] | null;
@@ -30397,6 +30537,8 @@ export interface components {
             modelo?: string | null;
             /** Format: double */
             capacidadCargaKg?: number;
+            transportistaRazonSocial?: string | null;
+            transportistaCuit?: string | null;
         };
         UpdateVentaCommand: {
             claveIdempotencia?: string | null;
@@ -30608,6 +30750,8 @@ export interface components {
             modelo: string;
             /** Format: double */
             capacidadCargaKg: number;
+            transportistaRazonSocial?: string | null;
+            transportistaCuit?: string | null;
         };
         VendedorComisionDto: {
             /** Format: uuid */

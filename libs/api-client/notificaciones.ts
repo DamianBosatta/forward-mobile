@@ -54,11 +54,17 @@ export function useBandejaAvisos(soloNoLeidas: boolean) {
   })
 }
 
-/** El número del badge: `noLeidas` no depende del límite, así que alcanza con pedir una fila. */
-export function useAvisosNoLeidosQuery(enabled: boolean, refetchInterval: number) {
+/**
+ * El número del badge. `noLeidas` no depende del límite; con `descontar` (avisos que mobile no muestra, p. ej. los fiscales)
+ * se pide una página de no leídos y se resta lo que cuente de ella, así el número coincide con lo que se ve en la bandeja.
+ */
+export function useAvisosNoLeidosQuery(enabled: boolean, refetchInterval: number, descontar?: (pagina: BandejaAvisos) => number) {
   return useQuery({
     queryKey: notificacionesKeys.noLeidas(),
-    queryFn: async () => (await api.get<BandejaAvisos>(urlBandeja(true, 1))).noLeidas,
+    queryFn: async () => {
+      const b = await api.get<BandejaAvisos>(urlBandeja(true, descontar ? AVISOS_POR_PAGINA : 1))
+      return descontar ? Math.max(0, b.noLeidas - descontar(b)) : b.noLeidas
+    },
     enabled,
     refetchInterval,
     meta: NO_PERSISTIR,

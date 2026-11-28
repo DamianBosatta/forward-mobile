@@ -63,7 +63,7 @@ const FilaRuta = React.memo(function FilaRuta({ item, index, colors, onSelect }:
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <Truck size={18} color={color} />
                 <Text style={{ ...typeScale.cuerpoDestacado, color: colors.text }}>
-                  Viaje #{item.id.substring(0, 8).toUpperCase()}
+                  {item.codigo}
                 </Text>
               </View>
 

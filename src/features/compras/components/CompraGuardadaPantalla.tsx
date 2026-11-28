@@ -178,17 +178,11 @@ export function CompraGuardadaPantalla({ id, aviso }: Props) {
           <Button label="Confirmar compra" variant="secundario" loading={confirmar.isPending} onPress={() => { void confirmarNota() }} />
         ) : null}
         {conFaltante && faltanteId && faltanteNumero ? ver(`Ver la compra ${numeroDeCompra({ id: faltanteId, numero: faltanteNumero })}`, `/(tabs)/compras/${faltanteId}`, 'secundario') : null}
-        {puedeComprobante && !conFaltante ? (
-          <Button label={compra.comprobante ? 'Corregir el comprobante del proveedor' : 'Cargar el comprobante del proveedor'} variant="secundario" onPress={() => setComprobanteAbierto(true)} />
-        ) : null}
+        {/* S9: el comprobante del proveedor se carga en la web. */}
         <Button label="Comprarle a otro proveedor" variant="secundario" onPress={() => router.replace('/(tabs)/compras/nueva' as never)} />
         {enlace('Volver a Compras', () => router.replace('/(tabs)/compras' as never))}
         {enlace('Listo', listo)}
       </ScrollView>
-      <ComprobanteProveedorPantalla visible={comprobanteAbierto}
-        form={compra.comprobante ? formDesdeComprobante(compra.comprobante) : formNuevo(socio.data ?? { razonSocial: compra.razonSocialProveedor }, hoyTexto())}
-        fotoUrl={compra.fotoFacturaProveedorUrl ?? null} guardando={guardarComprobante.isPending || asignarFoto.isPending} error={error}
-        onVolver={() => setComprobanteAbierto(false)} onGuardar={(cargado) => { void guardar(cargado) }} />
     </View>
   )
 }

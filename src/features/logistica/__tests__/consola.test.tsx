@@ -257,13 +257,13 @@ describe('Consola del chofer: hoja de ruta', () => {
 
   it('con dos rutas en curso pendientes, el selector muestra ambas sin repetir', async () => {
     jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
-    const a = { id: 'aaaaaaaa-1', estado: 2, fechaSalida: '2026-10-09T11:00:00Z', cantidadParadas: 3 }
-    const b = { id: 'bbbbbbbb-2', estado: 2, fechaSalida: '2026-10-08T11:00:00Z', cantidadParadas: 2 }
+    const a = { id: 'aaaaaaaa-1', codigo: 'HR-0201', estado: 2, fechaSalida: '2026-10-09T11:00:00Z', cantidadParadas: 3 }
+    const b = { id: 'bbbbbbbb-2', codigo: 'HR-0202', estado: 2, fechaSalida: '2026-10-08T11:00:00Z', cantidadParadas: 2 }
     listaServidor = (url) => (url.includes('fecha=') ? [a] : url.includes('estado=2') ? [a, b] : [])
     pintar()
     expect(await screen.findByText('Elegí la hoja de ruta')).toBeTruthy()
-    expect(screen.getAllByText('Viaje #AAAAAAAA')).toHaveLength(1)
-    expect(screen.getAllByText('Viaje #BBBBBBBB')).toHaveLength(1)
+    expect(screen.getAllByText('HR-0201')).toHaveLength(1)
+    expect(screen.getAllByText('HR-0202')).toHaveLength(1)
   })
 
   it('sin permiso de viajes muestra la pantalla de permiso y no consulta al servidor', async () => {

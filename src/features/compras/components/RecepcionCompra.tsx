@@ -127,7 +127,8 @@ export function RecepcionCompra(p: Props) {
         {p.puedeRecibir ? (
           <FilaInterruptor titulo="Recibir ahora" apoyo={RECIBIR_AHORA} prendido={p.recibirAhora} onChange={() => p.onRecibirAhora(!p.recibirAhora)} conDivisor />
         ) : null}
-        {recibir ? (
+        {/* S9: la carga del comprobante y la foto de la factura son de la web; acá solo queda la fecha que cuenta el plazo de pago. */}
+        {recibir && p.pideFactura ? (
           <View style={tarjeta}>
             <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Factura del proveedor</Text>
             {p.pideFactura ? (
@@ -135,12 +136,6 @@ export function RecepcionCompra(p: Props) {
                 error={p.fechaValida ? undefined : 'Escribí la fecha como dd/mm/aaaa.'}
                 help={`La condición de pago se cuenta desde la factura.${p.vencimiento ? ` ${p.vencimiento}` : ''}`} />
             ) : null}
-            {p.comprobante ? <Text style={{ ...typeScale.secundario, color: c.text }}>{p.comprobante}</Text> : null}
-            <View style={{ gap: space[2] }}>
-              <Button label="Sacar foto" variant="secundario" accessibilityLabel="Sacar foto de la factura" onPress={p.onComprobante} />
-              <Button label={p.comprobante ? 'Cambiar datos' : 'Cargar datos'} variant="secundario" accessibilityLabel="Cargar los datos de la factura" onPress={p.onComprobante} />
-            </View>
-            <Text style={secundario}>Opcional. Se puede cargar después desde la compra.</Text>
           </View>
         ) : null}
         <View style={{ gap: space[1] }}>
