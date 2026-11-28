@@ -42,6 +42,13 @@ export const ActualizarConfiguracionArcaCommandSchema = z.object({
   puntoVentaId: z.string().nullable().optional(),
 })
 
+export const AmbienteCotSchema = z.enum(['Prueba', 'Produccion'])
+
+export const ActualizarConfiguracionCotCommandSchema = z.object({
+  ambiente: AmbienteCotSchema.optional(),
+  habilitado: z.boolean().optional(),
+})
+
 export const ActualizarListaPrecioCommandSchema = z.object({
   activa: z.boolean().optional(),
   markupPorcentaje: z.number().min(0).optional(),
@@ -430,6 +437,7 @@ export const CerrarCajaConArqueoRequestSchema = z.object({
   diferenciaVista: z.number().optional(),
   moneda: z.string().nullable().optional(),
   motivoDiferencia: z.string().nullable().optional(),
+  pendientesVistos: z.number().int().optional(),
   saldoFinalDeclarado: z.number().optional(),
 })
 
@@ -777,12 +785,44 @@ export const CreateCuentaCorrienteCommandSchema = z.object({
   vendedorId: z.string().nullable().optional(),
 })
 
+export const ProvinciaSchema = z.enum([
+  'CiudadAutonomaDeBuenosAires',
+  'BuenosAires',
+  'Catamarca',
+  'Chaco',
+  'Chubut',
+  'Cordoba',
+  'Corrientes',
+  'EntreRios',
+  'Formosa',
+  'Jujuy',
+  'LaPampa',
+  'LaRioja',
+  'Mendoza',
+  'Misiones',
+  'Neuquen',
+  'RioNegro',
+  'Salta',
+  'SanJuan',
+  'SanLuis',
+  'SantaCruz',
+  'SantaFe',
+  'SantiagoDelEstero',
+  'TierraDelFuego',
+  'Tucuman',
+])
+
 export const CreateDepositoCommandSchema = z.object({
+  calle: z.string().max(120).nullable().optional(),
+  codigoPostal: z.string().nullable().optional(),
   direccion: z.string().max(250).nullable().optional(),
   latitude: z.number().nullable().optional(),
   listaPrecioId: z.string().nullable().optional(),
+  localidad: z.string().max(100).nullable().optional(),
   longitude: z.number().nullable().optional(),
   nombre: z.string().min(1).max(100).nullable().optional(),
+  numero: z.string().max(10).nullable().optional(),
+  provincia: ProvinciaSchema.optional(),
 })
 
 export const CreateFraganciaCommandSchema = z.object({
@@ -804,6 +844,7 @@ export const CreateProductoCommandSchema = z.object({
   bultoContenido: z.number().optional(),
   bultoMadreContenido: z.number().nullable().optional(),
   categoriaId: z.string().nullable().optional(),
+  codigoArba: z.string().max(6).nullable().optional(),
   codigoBarra: z.string().max(64).nullable().optional(),
   codigoPropio: z.string().nullable().optional(),
   codigoProveedor: z.string().max(100).nullable().optional(),
@@ -820,6 +861,7 @@ export const CreateProductoCommandSchema = z.object({
   stockInicial: z.number().min(0).optional(),
   stockMinimo: z.number().min(0).max(2147483647).optional(),
   ubicacionDeposito: z.string().nullable().optional(),
+  unidadArba: z.string().max(3).nullable().optional(),
   unidadMedida: z.string().nullable().optional(),
   ventaMinimaUnidades: z.number().optional(),
 })
@@ -857,7 +899,9 @@ export const TopeCreditoDtoSchema = z.object({ monto: z.number().nullable().opti
 
 export const CreateSocioCommandSchema = z.object({
   altaProvisoria: z.boolean().optional(),
+  calle: z.string().max(120).nullable().optional(),
   claveIdempotencia: z.string().nullable().optional(),
+  codigoPostal: z.string().nullable().optional(),
   condicionIva: z.string().nullable().optional(),
   condicionIvaId: z.number().int().nullable().optional(),
   condicionPago: CondicionPagoDtoSchema.optional(),
@@ -872,6 +916,8 @@ export const CreateSocioCommandSchema = z.object({
   longitud: z.number().nullable().optional(),
   nombreContacto: z.string().max(160).nullable().optional(),
   nombreFantasia: z.string().max(160).nullable().optional(),
+  numero: z.string().max(10).nullable().optional(),
+  provincia: ProvinciaSchema.optional(),
   razonSocial: z.string().min(1).nullable().optional(),
   saldoInicial: z.number().min(0).optional(),
   telefono: z.string().nullable().optional(),
@@ -913,6 +959,8 @@ export const CreateVehiculoCommandSchema = z.object({
   claveIdempotencia: z.string().nullable().optional(),
   modelo: z.string().min(1).max(100).nullable().optional(),
   patente: z.string().min(1).max(20).nullable().optional(),
+  transportistaCuit: z.string().nullable().optional(),
+  transportistaRazonSocial: z.string().nullable().optional(),
 })
 
 export const TipoOperacionVentaSchema = z.enum(['Presupuesto', 'Pedido'])
@@ -1708,12 +1756,17 @@ export const UpdateDatosEmpresaCommandSchema = z.object({
 
 export const UpdateDepositoCommandSchema = z.object({
   activo: z.boolean().optional(),
+  calle: z.string().max(120).nullable().optional(),
+  codigoPostal: z.string().nullable().optional(),
   direccion: z.string().max(250).nullable().optional(),
   id: z.string().optional(),
   latitude: z.number().nullable().optional(),
   listaPrecioId: z.string().nullable().optional(),
+  localidad: z.string().max(100).nullable().optional(),
   longitude: z.number().nullable().optional(),
   nombre: z.string().min(1).max(100).nullable().optional(),
+  numero: z.string().max(10).nullable().optional(),
+  provincia: ProvinciaSchema.optional(),
 })
 
 export const UpdateDiasEntregaCommandSchema = z.object({
@@ -1788,6 +1841,7 @@ export const UpdateProductoCommandSchema = z.object({
   bultoContenido: z.number().optional(),
   bultoMadreContenido: z.number().nullable().optional(),
   categoriaId: z.string().nullable().optional(),
+  codigoArba: z.string().max(6).nullable().optional(),
   codigoBarra: z.string().max(64).nullable().optional(),
   codigoPropio: z.string().nullable().optional(),
   codigoProveedor: z.string().max(100).nullable().optional(),
@@ -1804,11 +1858,14 @@ export const UpdateProductoCommandSchema = z.object({
   precioCompraBase: z.number().min(0).optional(),
   stockMinimo: z.number().int().nullable().optional(),
   ubicacionDeposito: z.string().nullable().optional(),
+  unidadArba: z.string().max(3).nullable().optional(),
   unidadMedida: z.string().nullable().optional(),
   ventaMinimaUnidades: z.number().optional(),
 })
 
 export const UpdateSocioCommandSchema = z.object({
+  calle: z.string().max(120).nullable().optional(),
+  codigoPostal: z.string().nullable().optional(),
   condicionIva: z.string().nullable().optional(),
   condicionIvaId: z.number().int().nullable().optional(),
   condicionPago: CondicionPagoDtoSchema.optional(),
@@ -1825,6 +1882,8 @@ export const UpdateSocioCommandSchema = z.object({
   longitud: z.number().nullable().optional(),
   nombreContacto: z.string().max(160).nullable().optional(),
   nombreFantasia: z.string().max(160).nullable().optional(),
+  numero: z.string().max(10).nullable().optional(),
+  provincia: ProvinciaSchema.optional(),
   razonSocial: z.string().min(1).nullable().optional(),
   telefono: z.string().nullable().optional(),
   topeCredito: TopeCreditoDtoSchema.optional(),
@@ -1860,6 +1919,8 @@ export const UpdateVehiculoCommandSchema = z.object({
   id: z.string().optional(),
   modelo: z.string().min(1).max(100).nullable().optional(),
   patente: z.string().min(1).max(20).nullable().optional(),
+  transportistaCuit: z.string().nullable().optional(),
+  transportistaRazonSocial: z.string().nullable().optional(),
 })
 
 export const UpdateVentaCommandItemDtoSchema = z.object({
