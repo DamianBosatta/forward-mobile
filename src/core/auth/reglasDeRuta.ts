@@ -117,7 +117,12 @@ export const REGLAS_DE_RUTA: readonly ReglaDeRuta[] = [
   { prefix: '/inventario/nuevo', requiere: { modulo: 'MOD_PRODUCTOS', accion: 'create' } },
   { prefix: '/inventario/editar', requiere: { modulo: 'MOD_PRODUCTOS', accion: 'update' } },
   { prefix: '/inventario', requiere: { modulo: 'MOD_STOCK' } },
-  { prefix: '/logistica/picking', requiere: { modulo: 'MOD_VIAJES' } },
+  // The depot board: MOD_VIAJES plus who operates the depot or builds trips (QA F10), like the
+  // backend gate of its lists (ventas-para-preparacion, ventas-empacadas).
+  {
+    prefix: '/logistica/picking',
+    requiere: { modulo: ['CAP_OPERAR_DEPOSITO', 'CAP_ARMAR_VIAJES'], ademas: ['MOD_VIAJES'] },
+  },
   // Armar viajes y sus vehículos: CAP_ARMAR_VIAJES (L30, L60), como LogisticaController.
   {
     prefix: '/logistica/viajes',
